@@ -1,4 +1,4 @@
-"""
+﻿"""
 URL configuration for panaderia project.
 
 The urlpatterns list routes URLs to views. For more information please see:
@@ -15,11 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
+
+from apps.core.views import ping
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("myapp.urls")),   # incluye las rutas de la app
+    path("api/ping/", ping, name="ping"),
     path("api/v1/", include(("apps.accounts.urls", "accounts"), namespace="v1-accounts")),
     path("api/v1/", include(("apps.core.urls", "core"), namespace="v1-core")),
 ]

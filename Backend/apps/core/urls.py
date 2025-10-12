@@ -1,5 +1,9 @@
-from django.urls import path
+﻿from django.urls import path
+
+from .views import ping
+
+app_name = "core"
 
 urlpatterns = [
-    # reservado para /api/v1/health si luego migramos aca
+    path("ping/", ping, name="ping"),
 ]
