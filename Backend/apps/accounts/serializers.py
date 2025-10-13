@@ -1,9 +1,12 @@
-from typing import Any, Dict
+﻿from typing import Any, Dict
 
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
 
 from apps.common.validators import normalize_email, validate_password_policy
+from .models import PasswordResetRequest
+
+PASSWORD_POLICY_MESSAGE = "Debe tener al menos 8 caracteres, incluir letras, números y un caracter especial"
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -21,9 +24,7 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate_password(self, value: str) -> str:
         if not validate_password_policy(value):
-            raise serializers.ValidationError(
-                "Debe tener al menos 8 caracteres, incluir letras, números y un caracter especial"
-            )
+            raise serializers.ValidationError(PASSWORD_POLICY_MESSAGE)
         return value
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
@@ -79,4 +80,48 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value: str) -> str:
+        return normalize_email(value)
+
+
+class ResetPasswordValidateSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        token = attrs.get("token")
+        reset_request = PasswordResetRequest.find_valid_by_token(token)
+        if reset_request is None:
+            raise serializers.ValidationError({"detail": "Token inválido o expirado"})
+        self.context["reset_request"] = reset_request
+        return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True, trim_whitespace=False, min_length=8)
+    password2 = serializers.CharField(write_only=True, required=True, trim_whitespace=False, min_length=8)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        token = attrs.get("token")
+        password = attrs.get("password")
+        password2 = attrs.get("password2")
+
+        reset_request = PasswordResetRequest.find_valid_by_token(token)
+        if reset_request is None:
+            raise serializers.ValidationError({"detail": "Token inválido o expirado"})
+
+        if password != password2:
+            raise serializers.ValidationError({"password2": "Las contraseñas no coinciden"})
+
+        if not validate_password_policy(password):
+            raise serializers.ValidationError({"password": PASSWORD_POLICY_MESSAGE})
+
+        attrs["reset_request"] = reset_request
+        return attrs
+
 
