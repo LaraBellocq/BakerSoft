@@ -242,6 +242,37 @@ button:focus-visible {
   opacity: 0.6;
 }
 
+.field-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.field-inline label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.field-inline label input {
+  margin: 0;
+}
+
+.field-inline a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.field-inline a:hover,
+.field-inline a:focus-visible {
+  text-decoration: underline;
+}
+
 .hint {
   margin: 0;
   font-size: 0.85rem;

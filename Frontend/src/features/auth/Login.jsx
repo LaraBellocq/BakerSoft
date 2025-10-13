@@ -209,7 +209,7 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="field">
-          <label htmlFor="login-email">Correo electronico</label>
+          <label htmlFor="login-email">Correo electrónico</label>
           <input
             id="login-email"
             type="email"
@@ -267,24 +267,8 @@ export default function Login() {
           ) : null}
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          <label
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontWeight: 600,
-              color: '#1f2937',
-            }}
-          >
+        <div className="field field-inline">
+          <label>
             <input
               type="checkbox"
               checked={remember}
@@ -293,16 +277,7 @@ export default function Login() {
             />
             <span>Recordarme</span>
           </label>
-          <Link
-            to="/forgot-password"
-            style={{
-              color: '#2563eb',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            Olvidé mi contraseña
-          </Link>
+          <Link to="/forgot-password">Olvidé mi contraseña</Link>
         </div>
 
         <div className="actions">
