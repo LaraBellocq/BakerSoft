@@ -1,10 +1,111 @@
 ﻿import secrets
 from datetime import timedelta
 from hashlib import sha256
+from typing import Any, Dict, Optional
 
-from django.conf import settings
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
+
+
+class LoginAttempt(models.Model):
+    email = models.CharField(max_length=254)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="login_attempts",
+    )
+    success = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["email", "created_at"]),
+            models.Index(fields=["user", "created_at"]),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:  # pragma: no cover - repr helper
+        status = "success" if self.success else "failure"
+        return f"LoginAttempt(email={self.email}, status={status}, ip={self.ip})"
+
+
+class AccountLock(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="account_lock",
+    )
+    locked_until = models.DateTimeField(null=True, blank=True)
+    consecutive_failures = models.PositiveIntegerField(default=0)
+    lockouts_last_24h = models.PositiveIntegerField(default=0)
+    last_lock_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "locked_until"]),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - repr helper
+        return (
+            f"AccountLock(user={self.user_id}, locked_until={self.locked_until}, "
+            f"consecutive_failures={self.consecutive_failures}, lockouts_last_24h={self.lockouts_last_24h})"
+        )
+
+    def reset_failures(self) -> bool:
+        was_locked = bool(self.locked_until)
+        if self.consecutive_failures or self.locked_until:
+            self.consecutive_failures = 0
+            self.locked_until = None
+            self.save(update_fields=["consecutive_failures", "locked_until", "updated_at"])
+        return was_locked
+
+
+class SecurityEvent(models.Model):
+    event_type = models.CharField(max_length=64)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="security_events",
+    )
+    email = models.CharField(max_length=254, blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    metadata = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["event_type", "created_at"]),
+            models.Index(fields=["email", "created_at"]),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:  # pragma: no cover - repr helper
+        return f"SecurityEvent(type={self.event_type}, email={self.email})"
+
+    @classmethod
+    def record(
+        cls,
+        event_type: str,
+        *,
+        user=None,
+        email: Optional[str] = None,
+        ip: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "SecurityEvent":
+        return cls.objects.create(
+            event_type=event_type,
+            user=user,
+            email=email or "",
+            ip=ip,
+            metadata=metadata or {},
+        )
 
 
 class PasswordResetRequest(models.Model):
@@ -23,7 +124,7 @@ class PasswordResetRequest(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover - repr helper
         return f"PasswordResetRequest(user={self.user_id}, expires_at={self.expires_at.isoformat()})"
 
     @staticmethod
@@ -59,7 +160,7 @@ class PasswordResetRequest(models.Model):
         else:
             raise RuntimeError("No se pudo generar un token de restablecimiento único")
 
-        instance = cls.objects.create(
+        cls.objects.create(
             user=user,
             token_hash=token_hash,
             expires_at=now + timedelta(minutes=15),
@@ -78,3 +179,4 @@ class PasswordResetRequest(models.Model):
         if not instance.is_valid():
             return None
         return instance
+
