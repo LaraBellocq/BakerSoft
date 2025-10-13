@@ -172,118 +172,145 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page">
+    <section className="form" aria-labelledby="login-title">
+      <div className="form-header">
+        <div className="form-icon" aria-hidden="true">
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z"
+              fill="#7A4D14"
+            />
+          </svg>
+        </div>
+        <h2 id="login-title">Iniciar sesión</h2>
+        <p>Ingresa tus credenciales para continuar</p>
+      </div>
+
       {globalSuccess ? (
-        <div className="auth-banner auth-banner--success" role="status">
-          {globalSuccess}
+        <div className="alert success" role="status" aria-live="polite">
+          <div className="alert-message">
+            <span>{globalSuccess}</span>
+          </div>
         </div>
       ) : null}
 
-      {globalError ? (
-        <div className="auth-banner auth-banner--error" role="alert">
+      {globalError && !globalSuccess ? (
+        <div className="alert error" role="alert" aria-live="assertive">
           {globalError}
         </div>
       ) : null}
 
-      <div className="auth-card">
-        <div className="auth-avatar" aria-hidden="true">
-          <span className="auth-avatar__icon">[ ]</span>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="field">
+          <label htmlFor="login-email">Correo electronico</label>
+          <input
+            id="login-email"
+            type="email"
+            autoComplete="email"
+            placeholder="ejemplo@email.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            aria-required="true"
+            aria-invalid={Boolean(emailError)}
+            aria-describedby={emailError ? 'login-email-error' : undefined}
+            className={emailError ? 'has-error' : ''}
+            disabled={loading}
+            required
+          />
+          {emailError ? (
+            <p id="login-email-error" className="error" role="alert">
+              {emailError}
+            </p>
+          ) : null}
         </div>
 
-        <h1 className="auth-title">Iniciar sesión</h1>
-
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <div className="form-field">
-            <label className="form-label" htmlFor="login-email">
-              Email
-            </label>
+        <div className="field">
+          <label htmlFor="login-password">Contraseña</label>
+          <div className="input-with-icon">
             <input
-              id="login-email"
-              type="email"
-              className={`form-input${emailError ? ' form-input--error' : ''}`}
-              placeholder="usuario@empresa.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              aria-invalid={emailError ? 'true' : 'false'}
-              aria-describedby={emailError ? 'login-email-error' : undefined}
+              id="login-password"
+              type={passwordType}
+              autoComplete="current-password"
+              placeholder="Ingresa tu contraseña"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-required="true"
+              aria-invalid={Boolean(passwordError)}
+              aria-describedby={
+                passwordError ? 'login-password-error' : undefined
+              }
+              className={passwordError ? 'has-error' : ''}
+              disabled={loading}
+              required
+            />
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={passwordToggleLabel}
+              disabled={loading}
+            >
+              <span aria-hidden="true">{showPassword ? '🙈' : '👁️'}</span>
+            </button>
+          </div>
+          {passwordError ? (
+            <p id="login-password-error" className="error" role="alert">
+              {passwordError}
+            </p>
+          ) : null}
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontWeight: 600,
+              color: '#1f2937',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(event) => setRemember(event.target.checked)}
               disabled={loading}
             />
-            {emailError ? (
-              <p
-                id="login-email-error"
-                className="input-error"
-                role="alert"
-              >
-                {emailError}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="form-field">
-            <label className="form-label" htmlFor="login-password">
-              Contraseña
-            </label>
-            <div className="password-input-wrapper">
-              <input
-                id="login-password"
-                type={passwordType}
-                className={`form-input${
-                  passwordError ? ' form-input--error' : ''
-                }`}
-                placeholder="Ingresa tu contraseña"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                aria-invalid={passwordError ? 'true' : 'false'}
-                aria-describedby={
-                  passwordError ? 'login-password-error' : undefined
-                }
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={passwordToggleLabel}
-                disabled={loading}
-              >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-            {passwordError ? (
-              <p
-                id="login-password-error"
-                className="input-error"
-                role="alert"
-              >
-                {passwordError}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="form-meta">
-            <label className="remember-me">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(event) => setRemember(event.target.checked)}
-                disabled={loading}
-              />
-              Recordarme
-            </label>
-            <Link className="forgot-link" to="/forgot-password">
-              Olvidé mi contraseña
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={loading}
+            <span>Recordarme</span>
+          </label>
+          <Link
+            to="/forgot-password"
+            style={{
+              color: '#2563eb',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
           >
+            Olvidé mi contraseña
+          </Link>
+        </div>
+
+        <div className="actions">
+          <button type="submit" className="primary full-width" disabled={loading}>
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </section>
   );
 }
