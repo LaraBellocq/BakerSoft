@@ -68,70 +68,72 @@ export default function Login() {
 
   return (
     <section className="form" aria-labelledby="login-title">
-      <div className="form-header">
-        <div className="form-icon" aria-hidden="true">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z" fill="#7A4D14"/>
-          </svg>
-        </div>
-        <h2 id="login-title">Iniciar sesión</h2>
-        <p>Ingresa tus credenciales para continuar</p>
-      </div>
-
-      {globalSuccess ? (
-        <div className="alert success" role="status" aria-live="polite">
-          <div className="alert-message"><span>{globalSuccess}</span></div>
-        </div>
-      ) : null}
-
-      {globalError && !globalSuccess ? (
-        <div className="alert error" role="alert" aria-live="assertive">{globalError}</div>
-      ) : null}
-
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="field">
-          <label htmlFor="login-email">Correo electrónico</label>
-          <input
-            id="login-email" type="email" autoComplete="email" placeholder="ejemplo@email.com"
-            value={email} onChange={e=>setEmail(e.target.value)}
-            aria-required="true" aria-invalid={Boolean(emailError)}
-            aria-describedby={emailError ? 'login-email-error' : undefined}
-            className={emailError ? 'has-error' : ''} disabled={loading} required
-          />
-          {emailError ? <p id="login-email-error" className="error" role="alert">{emailError}</p> : null}
+      <div className="form-card">
+        <div className="form-header">
+          <div className="form-icon" aria-hidden="true">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z" fill="#7A4D14"/>
+            </svg>
+          </div>
+          <h2 id="login-title">Iniciar sesión</h2>
+          <p>Ingresa tus credenciales para continuar</p>
         </div>
 
-        <div className="field">
-          <label htmlFor="login-password">Contraseña</label>
-          <div className="input-with-icon">
+        {globalSuccess ? (
+          <div className="alert success" role="status" aria-live="polite">
+            <div className="alert-message"><span>{globalSuccess}</span></div>
+          </div>
+        ) : null}
+
+        {globalError && !globalSuccess ? (
+          <div className="alert error" role="alert" aria-live="assertive">{globalError}</div>
+        ) : null}
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="field">
+            <label htmlFor="login-email">Correo electrónico</label>
             <input
-              id="login-password" type={passwordType} autoComplete="current-password" placeholder="Ingresa tu contraseña"
-              value={password} onChange={e=>setPassword(e.target.value)}
-              aria-required="true" aria-invalid={Boolean(passwordError)}
-              aria-describedby={passwordError ? 'login-password-error' : undefined}
-              className={passwordError ? 'has-error' : ''} disabled={loading} required
+              id="login-email" type="email" autoComplete="email" placeholder="ejemplo@email.com"
+              value={email} onChange={e=>setEmail(e.target.value)}
+              aria-required="true" aria-invalid={Boolean(emailError)}
+              aria-describedby={emailError ? 'login-email-error' : undefined}
+              className={emailError ? 'has-error' : ''} disabled={loading} required
             />
-            <button type="button" className="icon-button" onClick={()=>setShowPassword(p=>!p)} aria-label={toggleLabel} disabled={loading}>
-              <span aria-hidden="true">{showPassword ? '🙈' : '👁️'}</span>
+            {emailError ? <p id="login-email-error" className="error" role="alert">{emailError}</p> : null}
+          </div>
+
+          <div className="field">
+            <label htmlFor="login-password">Contraseña</label>
+            <div className="input-with-icon">
+              <input
+                id="login-password" type={passwordType} autoComplete="current-password" placeholder="Ingresa tu contraseña"
+                value={password} onChange={e=>setPassword(e.target.value)}
+                aria-required="true" aria-invalid={Boolean(passwordError)}
+                aria-describedby={passwordError ? 'login-password-error' : undefined}
+                className={passwordError ? 'has-error' : ''} disabled={loading} required
+              />
+              <button type="button" className="icon-button" onClick={()=>setShowPassword(p=>!p)} aria-label={toggleLabel} disabled={loading}>
+                <span aria-hidden="true">{showPassword ? '🙈' : '👁️'}</span>
+              </button>
+            </div>
+            {passwordError ? <p id="login-password-error" className="error" role="alert">{passwordError}</p> : null}
+          </div>
+
+          <div className="field field-inline">
+            <label>
+              <input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} disabled={loading} />
+              <span>Recordarme</span>
+            </label>
+            <Link to="/forgot-password">Olvidé mi contraseña</Link>
+          </div>
+
+          <div className="actions">
+            <button type="submit" className="primary full-width" disabled={loading}>
+              {loading ? 'Ingresando...' : 'Ingresar'}
             </button>
           </div>
-          {passwordError ? <p id="login-password-error" className="error" role="alert">{passwordError}</p> : null}
-        </div>
-
-        <div className="field field-inline">
-          <label>
-            <input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} disabled={loading} />
-            <span>Recordarme</span>
-          </label>
-          <Link to="/forgot-password">Olvidé mi contraseña</Link>
-        </div>
-
-        <div className="actions">
-          <button type="submit" className="primary full-width" disabled={loading}>
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </section>
   );
 }

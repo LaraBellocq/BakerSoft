@@ -409,3 +409,22 @@ button.secondary:hover:not(:disabled) {
     padding: 2rem 1.5rem;
   }
 }
+
+/* PAGE LAYOUT */
+.form {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: #f6f7fb;
+}
+
+/* CARD WRAPPER */
+.form-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  padding: 28px 32px;
+}
