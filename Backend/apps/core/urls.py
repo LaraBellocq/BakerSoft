@@ -1,9 +1,10 @@
 ﻿from django.urls import path
-
-from .views import ping
-
-app_name = "core"
+from .views import ping, api_v1_root
 
 urlpatterns = [
-    path("ping/", ping, name="ping"),
+    # healthcheck fuera de la versión
+    path("api/ping/", ping, name="ping"),
+
+    # raíz de la API v1 (mapita). OJO: esto se incluye bajo /api/v1/
+    path("", api_v1_root, name="api-v1-root"),
 ]

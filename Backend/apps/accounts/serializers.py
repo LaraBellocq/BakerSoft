@@ -1,6 +1,6 @@
-﻿from typing import Any, Dict
+from typing import Any, Dict
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
 
 from apps.common.validators import normalize_email, validate_password_policy
@@ -50,3 +50,33 @@ class RegisterSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, trim_whitespace=False)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        request = self.context.get('request')
+        email_raw = attrs.get('email', '')
+        password = attrs.get('password')
+        email = normalize_email(email_raw)
+        attrs['email'] = email
+
+        user = authenticate(request=request, username=email, password=password)
+        if user is None:
+            User = get_user_model()
+            try:
+                user_obj = User.objects.get(email__iexact=email)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({'detail': 'Credenciales inválidas'})
+            if not user_obj.is_active:
+                raise serializers.ValidationError({'detail': 'Usuario inactivo', 'inactive': True})
+            raise serializers.ValidationError({'detail': 'Credenciales inválidas'})
+
+        if not user.is_active:
+            raise serializers.ValidationError({'detail': 'Usuario inactivo', 'inactive': True})
+
+        attrs['user'] = user
+        return attrs
+
