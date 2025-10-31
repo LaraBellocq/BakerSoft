@@ -1,41 +1,40 @@
-const BASE_URL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000/api/';
+export const API_URL =
+  import.meta?.env?.VITE_API_BASE?.replace(/\/?$/, '/') ||
+  'http://127.0.0.1:8000/api/';
 
-const resolveBase = (base) => (base?.endsWith('/') ? base : `${base}/`);
-
+/**
+ * fetchJson: helper único para todas las llamadas HTTP del Front.
+ * - Agrega base URL (con / final).
+ * - Fuerza JSON en request y parsea JSON en response (si hay body).
+ * - En error, lanza { status, data } para manejo uniforme en UI.
+ */
 export async function fetchJson(path, options = {}) {
-  const base = resolveBase(BASE_URL);
-  const url = `${base}${path.startsWith('/') ? path.slice(1) : path}`;
-  const { headers, body, ...rest } = options;
-
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    ...rest,
+  const url = `${API_URL}${String(path).replace(/^\/+/, '')}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
   };
 
-  if (body !== undefined) {
-    config.body = typeof body === 'string' ? body : JSON.stringify(body);
+  let body = options.body;
+  if (body && typeof body !== 'string') {
+    body = JSON.stringify(body);
   }
 
-  const response = await fetch(url, config);
+  const res = await fetch(url, { ...options, headers, body });
+  const text = await res.text();
 
-  const parseJson = async () => {
-    try {
-      return await response.json();
-    } catch (error) {
-      return null;
-    }
-  };
-
-  if (!response.ok) {
-    const errorData = await parseJson();
-    throw {
-      status: response.status,
-      data: errorData,
-    };
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // respuesta no-JSON
   }
 
-  return await parseJson();
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status}`);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
 }
