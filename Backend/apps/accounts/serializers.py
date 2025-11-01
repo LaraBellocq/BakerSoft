@@ -102,18 +102,30 @@ class ResetPasswordValidateSerializer(serializers.Serializer):
 
 
 class ResetPasswordSerializer(serializers.Serializer):
-    token = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    token = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     password = serializers.CharField(write_only=True, required=True, trim_whitespace=False, min_length=8)
     password2 = serializers.CharField(write_only=True, required=True, trim_whitespace=False, min_length=8)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         token = attrs.get("token")
+        email_raw = attrs.get("email", "")
         password = attrs.get("password")
         password2 = attrs.get("password2")
 
-        reset_request = PasswordResetRequest.find_valid_by_token(token)
-        if reset_request is None:
-            raise serializers.ValidationError({"detail": "Token inválido o expirado"})
+        email = normalize_email(email_raw)
+        attrs["email"] = email
+
+        User = get_user_model()
+        user = User.objects.filter(email__iexact=email, is_active=True).first()
+        if user is None:
+            raise serializers.ValidationError({"email": "No existe una cuenta con ese email"})
+
+        reset_request = None
+        if token:
+            reset_request = PasswordResetRequest.find_valid_by_token(token)
+            if reset_request is None or reset_request.user_id != user.pk:
+                raise serializers.ValidationError({"detail": "Token inválido o expirado"})
 
         if password != password2:
             raise serializers.ValidationError({"password2": "Las contraseñas no coinciden"})
@@ -122,6 +134,7 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password": PASSWORD_POLICY_MESSAGE})
 
         attrs["reset_request"] = reset_request
+        attrs["user"] = user
         return attrs
 
 

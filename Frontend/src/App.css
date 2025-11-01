@@ -446,6 +446,12 @@ button.secondary:hover:not(:disabled) {
   gap: 1.5rem;
 }
 
+.reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .register-card .strength {
   gap: 0.35rem;
 }

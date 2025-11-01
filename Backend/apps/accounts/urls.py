@@ -2,6 +2,7 @@
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
+    EmailExistsView,
     ForgotPasswordView,
     LoginView,
     RegisterView,
@@ -18,4 +19,5 @@ urlpatterns = [
     path("auth/password/forgot/", ForgotPasswordView.as_view(), name="auth-password-forgot"),
     path("auth/password/reset/validate/", ResetPasswordValidateView.as_view(), name="auth-password-reset-validate"),
     path("auth/password/reset/", ResetPasswordView.as_view(), name="auth-password-reset"),
+    path("auth/email-exists/", EmailExistsView.as_view(), name="auth-email-exists"),
 ]

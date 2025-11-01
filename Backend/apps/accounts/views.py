@@ -159,26 +159,44 @@ class ResetPasswordView(APIView):
         client_ip = get_client_ip(request)
         if not serializer.is_valid():
             errors = serializer.errors
+            token = request.data.get('token')
+            reset_request = _get_reset_request_for_logging(token)
+            log_email = request.data.get('email') or (reset_request.user.email if reset_request else 'unknown')
             if 'detail' in errors:
-                token = request.data.get('token')
-                reset_request = _get_reset_request_for_logging(token)
-                log_email = reset_request.user.email if reset_request else 'unknown'
                 logger.warning(
                     'password_reset_failed',
                     extra={'email': log_email, 'ts': timezone.now().isoformat(), 'ip': client_ip, 'reason': 'invalid_or_expired'},
                 )
                 return Response({'detail': str(errors['detail'][0])}, status=status.HTTP_400_BAD_REQUEST)
+            if 'email' in errors:
+                logger.warning(
+                    'password_reset_failed',
+                    extra={'email': log_email, 'ts': timezone.now().isoformat(), 'ip': client_ip, 'reason': 'email_not_found'},
+                )
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-        reset_request = serializer.validated_data['reset_request']
-        user = reset_request.user
+        user = serializer.validated_data['user']
+        reset_request = serializer.validated_data.get('reset_request')
         password = serializer.validated_data['password']
         user.set_password(password)
         user.save(update_fields=['password'])
-        reset_request.mark_used()
-        user.password_reset_requests.filter(used_at__isnull=True).exclude(pk=reset_request.pk).update(used_at=timezone.now())
+        if reset_request:
+            reset_request.mark_used()
+            user.password_reset_requests.filter(used_at__isnull=True).exclude(pk=reset_request.pk).update(used_at=timezone.now())
         logger.info(
             'password_reset_succeeded',
             extra={'email': user.email, 'ts': timezone.now().isoformat(), 'ip': client_ip},
         )
         return Response({"message": "Contraseña actualizada"}, status=status.HTTP_200_OK)
+
+class EmailExistsView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def get(self, request, *args, **kwargs):
+        serializer = ForgotPasswordSerializer(data={'email': request.query_params.get('email')})
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        User = get_user_model()
+        exists = User.objects.filter(email__iexact=email).exists()
+        return Response({'exists': exists}, status=status.HTTP_200_OK)

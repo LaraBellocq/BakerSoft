@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { confirmPasswordReset, validateResetToken } from './api';
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordPolicyRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 function parseDrfErrors(data) {
@@ -53,31 +54,27 @@ export default function ResetPassword({
   const params = useParams();
   const routeToken = params?.token;
   const effectiveToken = useMemo(() => tokenProp ?? routeToken ?? '', [tokenProp, routeToken]);
-  const effectiveEmail = emailProp ? String(emailProp).trim().toLowerCase() : '';
   const hasToken = Boolean(effectiveToken);
-  const canSkipToken = !hasToken && Boolean(effectiveEmail);
 
+  const [email, setEmail] = useState(emailProp ? String(emailProp) : '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [clientErrors, setClientErrors] = useState({});
   const [serverErrors, setServerErrors] = useState({});
-  const [globalError, setGlobalError] = useState(canSkipToken ? '' : hasToken ? '' : 'Token invalido o expirado.');
+  const [globalError, setGlobalError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tokenIssue, setTokenIssue] = useState(!hasToken && !canSkipToken);
+  const [tokenIssue, setTokenIssue] = useState(false);
 
-  const passwordError = clientErrors.password || serverErrors.password;
-  const confirmError = clientErrors.confirmPassword || serverErrors.confirmPassword;
-  const showCloseButton = isModal && typeof onClose === 'function';
+  useEffect(() => {
+    if (emailProp) {
+      setEmail(String(emailProp));
+    }
+  }, [emailProp]);
 
   useEffect(() => {
     if (!hasToken) {
-      setTokenIssue(!canSkipToken);
-      if (!canSkipToken) {
-        setGlobalError('Token invalido o expirado.');
-      } else if (!successMessage) {
-        setGlobalError('');
-      }
+      setTokenIssue(false);
       return;
     }
 
@@ -102,7 +99,35 @@ export default function ResetPassword({
     return () => {
       cancelled = true;
     };
-  }, [canSkipToken, effectiveToken, hasToken, successMessage]);
+  }, [effectiveToken, hasToken]);
+
+  const updateFieldError = (field) => {
+    if (clientErrors[field]) {
+      setClientErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+    if (serverErrors[field]) {
+      setServerErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const handleEmailChange = (event) => {
+    setEmail(event.target.value);
+    updateFieldError('email');
+  };
+
+  const handlePasswordChange = (event) => {
+    setPassword(event.target.value);
+    updateFieldError('password');
+  };
+
+  const handleConfirmPasswordChange = (event) => {
+    setConfirmPassword(event.target.value);
+    updateFieldError('confirmPassword');
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -112,7 +137,14 @@ export default function ResetPassword({
     setSuccessMessage('');
     setTokenIssue(false);
 
+    const normalizedEmail = String(email || '').trim().toLowerCase();
     const nextClientErrors = {};
+
+    if (!normalizedEmail) {
+      nextClientErrors.email = 'El email es obligatorio';
+    } else if (!emailRegex.test(normalizedEmail)) {
+      nextClientErrors.email = 'Email invalido';
+    }
 
     if (!password) {
       nextClientErrors.password = 'La contrasena es obligatoria';
@@ -131,18 +163,12 @@ export default function ResetPassword({
       return;
     }
 
-    if (!hasToken && !canSkipToken) {
-      setGlobalError('Token invalido o expirado.');
-      setTokenIssue(true);
-      return;
-    }
-
     setLoading(true);
 
     try {
       await confirmPasswordReset({
         token: hasToken ? effectiveToken : undefined,
-        email: canSkipToken ? effectiveEmail : undefined,
+        email: normalizedEmail,
         password,
         confirm: confirmPassword,
       });
@@ -166,6 +192,11 @@ export default function ResetPassword({
       setLoading(false);
     }
   };
+
+  const emailError = clientErrors.email || serverErrors.email;
+  const passwordError = clientErrors.password || serverErrors.password;
+  const confirmError = clientErrors.confirmPassword || serverErrors.confirmPassword;
+  const showCloseButton = isModal && typeof onClose === 'function';
 
   const cardContent = (
     <div className="form-card">
@@ -213,7 +244,7 @@ export default function ResetPassword({
       {globalError && !successMessage ? (
         <div className="alert error" role="alert" aria-live="assertive">
           <p>{globalError}</p>
-          {tokenIssue && !canSkipToken ? (
+          {tokenIssue ? (
             onRequestToken ? (
               <button
                 type="button"
@@ -231,7 +262,29 @@ export default function ResetPassword({
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form className="reset-form" onSubmit={handleSubmit} noValidate>
+        <div className="field">
+          <label htmlFor="reset-email">Correo electronico</label>
+          <input
+            id="reset-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            aria-required="true"
+            aria-invalid={Boolean(emailError)}
+            aria-describedby={emailError ? 'reset-email-error' : undefined}
+            className={emailError ? 'has-error' : ''}
+            disabled={loading}
+            required
+          />
+          {emailError ? (
+            <p id="reset-email-error" className="error" role="alert">
+              {emailError}
+            </p>
+          ) : null}
+        </div>
+
         <div className="field">
           <label htmlFor="reset-password">Nueva contrasena</label>
           <input
@@ -239,10 +292,12 @@ export default function ResetPassword({
             type="password"
             autoComplete="new-password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={handlePasswordChange}
             aria-required="true"
             aria-invalid={Boolean(passwordError)}
-            aria-describedby={passwordError ? 'reset-password-error reset-password-hint' : 'reset-password-hint'}
+            aria-describedby={
+              passwordError ? 'reset-password-error reset-password-hint' : 'reset-password-hint'
+            }
             className={passwordError ? 'has-error' : ''}
             disabled={loading}
             required
@@ -264,7 +319,7 @@ export default function ResetPassword({
             type="password"
             autoComplete="new-password"
             value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
+            onChange={handleConfirmPasswordChange}
             aria-required="true"
             aria-invalid={Boolean(confirmError)}
             aria-describedby={confirmError ? 'reset-confirm-password-error' : undefined}
