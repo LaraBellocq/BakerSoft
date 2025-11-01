@@ -428,3 +428,21 @@ button.secondary:hover:not(:disabled) {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
   padding: 28px 32px;
 }
+
+.register-card {
+  padding: 36px 40px;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.register-card .strength {
+  gap: 0.35rem;
+}
+
+.register-card .strength-meter {
+  margin-top: 0.25rem;
+}
