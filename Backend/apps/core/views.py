@@ -9,6 +9,7 @@ def api_v1_root(_request):
         "endpoints": {
             "ping": "/api/ping/",
             "register": "/api/v1/auth/register/",
+            "tipo-producto-create": "/api/v1/tipo-producto/",
             # "login": "/api/v1/auth/login/",  # cuando exista
         }
     })

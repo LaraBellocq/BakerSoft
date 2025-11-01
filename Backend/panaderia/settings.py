@@ -138,6 +138,7 @@ CORS_ALLOWED_ORIGINS = [ #coneccion del backend con el front
 INSTALLED_APPS += [
     "apps.accounts",
     "apps.core",
+    "apps.products",
 ]
 
 REST_FRAMEWORK = {
