@@ -58,7 +58,7 @@ export default function Login() {
       nextClientErrors.email = 'Email invalido';
     }
     if (!password) {
-      nextClientErrors.password = 'La contraseña es obligatoria';
+      nextClientErrors.password = 'La contrasena es obligatoria';
     }
     if (Object.keys(nextClientErrors).length > 0) {
       setClientErrors(nextClientErrors);
@@ -188,13 +188,13 @@ export default function Login() {
           </div>
 
           <div className="field">
-            <label htmlFor="login-password">Contraseña</label>
+            <label htmlFor="login-password">Contrasena</label>
             <div className="input-with-icon">
               <input
                 id="login-password"
                 type={passwordType}
                 autoComplete="current-password"
-                placeholder="Ingresa tu contraseña"
+                placeholder="Ingresa tu contrasena"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 aria-required="true"
@@ -231,16 +231,16 @@ export default function Login() {
               />
               <span>Recordarme</span>
             </label>
-            <Link to="/forgot-password">Olvide mi contraseña</Link>
+            <Link to="/register" className="secondary" role="button">
+              Registrarse
+            </Link>
+            <Link to="/forgot-password">Olvide mi contrasena</Link>
           </div>
 
           <div className="actions">
             <button type="submit" className="primary full-width" disabled={loading}>
               {loading ? 'Ingresando...' : 'Ingresar'}
             </button>
-            <Link to="/register" className="secondary full-width" role="button">
-              Registrarse
-            </Link>
           </div>
         </form>
       </div>
