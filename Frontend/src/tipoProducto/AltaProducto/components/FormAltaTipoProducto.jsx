@@ -121,7 +121,7 @@ function FormAltaTipoProducto() {
     if (duplicatedRecord) {
       setStatus({
         type: 'error',
-        message: 'El código o nombre ya existen.',
+        message: 'El código o nombre del producto ya existen.',
       });
       setIsSubmitting(false);
       return;
@@ -129,7 +129,7 @@ function FormAltaTipoProducto() {
 
     setStatus({
       type: 'success',
-      message: 'Tipo de producto creado correctamente.',
+      message: 'Producto creado correctamente.',
     });
 
     resetForm();
@@ -148,7 +148,7 @@ function FormAltaTipoProducto() {
             placeholder="Ej: 001"
             required
             error={errors.code}
-            helperText="Identificador único del tipo de producto."
+            helperText="Identificador único del producto."
             maxLength={8}
           />
 

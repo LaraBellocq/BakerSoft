@@ -46,10 +46,10 @@ function EditarTipoProducto() {
     return (
       <div className="etp-main">
         <header className="etp-header">
-          <h1 className="etp-title">Editar tipo de producto</h1>
+          <h1 className="etp-title">Editar producto</h1>
         </header>
         <div className="etp-card">
-          <p>No encontramos el tipo de producto solicitado.</p>
+          <p>No encontramos el producto solicitado.</p>
           <Link className="etp-btn etp-btn-primary" to="/productos/tipos">
             Volver al listado
           </Link>
@@ -62,7 +62,7 @@ function EditarTipoProducto() {
     <div className="etp-main">
       <header className="etp-header">
         <div>
-          <h1 className="etp-title">Editar tipo de producto</h1>
+          <h1 className="etp-title">Editar producto</h1>
         </div>
         <div className="etp-user-badge" aria-hidden="true">
           <span>AP</span>

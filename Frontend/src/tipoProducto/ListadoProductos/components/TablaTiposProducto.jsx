@@ -22,7 +22,7 @@ function TablaTiposProducto({ tipos, onEdit, onDelete }) {
           ) : (
             <tr>
               <td colSpan={5} className="ltp-empty">
-                No se encontraron tipos de producto con ese criterio.
+                No se encontraron productos con ese criterio.
               </td>
             </tr>
           )}
