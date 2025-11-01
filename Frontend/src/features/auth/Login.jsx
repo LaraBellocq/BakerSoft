@@ -238,6 +238,9 @@ export default function Login() {
             <button type="submit" className="primary full-width" disabled={loading}>
               {loading ? 'Ingresando...' : 'Ingresar'}
             </button>
+            <Link to="/register" className="secondary full-width" role="button">
+              Registrarse
+            </Link>
           </div>
         </form>
       </div>
