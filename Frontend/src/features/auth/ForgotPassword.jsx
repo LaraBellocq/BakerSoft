@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { requestPasswordReset, logPasswordEvent } from './api';
+import { requestPasswordReset } from './api';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -60,7 +60,7 @@ export default function ForgotPassword() {
     if (!trimmedEmail) {
       nextClientErrors.email = 'El email es requerido';
     } else if (!emailRegex.test(trimmedEmail)) {
-      nextClientErrors.email = 'Email inválido';
+      nextClientErrors.email = 'Email invalido';
     }
 
     if (Object.keys(nextClientErrors).length > 0) {
@@ -73,13 +73,11 @@ export default function ForgotPassword() {
 
     try {
       await requestPasswordReset({ email: normalizedEmail });
-      setSuccessMessage('Si existe una cuenta, enviamos un enlace');
-      await logPasswordEvent({ email: normalizedEmail, action: 'request', success: true });
+      setSuccessMessage('Si existe una cuenta, enviamos un enlace.');
     } catch (error) {
       const { fieldErrors, globalMessage } = parseDrfErrors(error?.data);
       setServerErrors(fieldErrors);
-      setGlobalError(globalMessage || 'Inténtalo nuevamente.');
-      await logPasswordEvent({ email: normalizedEmail, action: 'request', success: false });
+      setGlobalError(globalMessage || 'Intentalo nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -90,35 +88,60 @@ export default function ForgotPassword() {
       <div className="form-card">
         <div className="form-header">
           <div className="form-icon" aria-hidden="true">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z" fill="#7A4D14"/>
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z"
+                fill="#7A4D14"
+              />
             </svg>
           </div>
-          <h2 id="forgot-password-title">Olvidé mi contraseña</h2>
+          <h2 id="forgot-password-title">Olvide mi contraseña</h2>
           <p>Te enviaremos un enlace para restablecerla.</p>
         </div>
 
         {successMessage ? (
           <div className="alert success" role="status" aria-live="polite">
-            <div className="alert-message"><span>{successMessage}</span></div>
+            <div className="alert-message">
+              <span>{successMessage}</span>
+            </div>
           </div>
         ) : null}
 
         {globalError && !successMessage ? (
-          <div className="alert error" role="alert" aria-live="assertive">{globalError}</div>
+          <div className="alert error" role="alert" aria-live="assertive">
+            {globalError}
+          </div>
         ) : null}
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">
-            <label htmlFor="forgot-email">Correo electrónico</label>
+            <label htmlFor="forgot-email">Correo electronico</label>
             <input
-              id="forgot-email" type="email" autoComplete="email" placeholder="ejemplo@email.com"
-              value={email} onChange={(e)=>setEmail(e.target.value)}
-              aria-required="true" aria-invalid={Boolean(emailError)}
+              id="forgot-email"
+              type="email"
+              autoComplete="email"
+              placeholder="ejemplo@email.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              aria-required="true"
+              aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? 'forgot-email-error' : undefined}
-              className={emailError ? 'has-error' : ''} disabled={loading} required
+              className={emailError ? 'has-error' : ''}
+              disabled={loading}
+              required
             />
-            {emailError ? <p id="forgot-email-error" className="error" role="alert">{emailError}</p> : null}
+            {emailError ? (
+              <p id="forgot-email-error" className="error" role="alert">
+                {emailError}
+              </p>
+            ) : null}
           </div>
 
           <div className="actions">

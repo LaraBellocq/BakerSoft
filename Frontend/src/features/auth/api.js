@@ -1,8 +1,13 @@
 import { fetchJson } from '../../services/api';
 
-// HU-01: Registro — MANTENER contrato usado por Register.jsx
+const AUTH_PREFIX = 'v1/auth/';
+
+export async function pingApi() {
+  return await fetchJson('ping/');
+}
+
 export async function registerUser({ name, email, password, confirm }) {
-  return await fetchJson('v1/auth/register/', {
+  return await fetchJson(`${AUTH_PREFIX}register/`, {
     method: 'POST',
     body: {
       nombre_completo: String(name || '').trim(),
@@ -13,9 +18,8 @@ export async function registerUser({ name, email, password, confirm }) {
   });
 }
 
-// HU-02: Login
 export async function loginUser({ email, password }) {
-  return await fetchJson('v1/auth/login/', {
+  return await fetchJson(`${AUTH_PREFIX}login/`, {
     method: 'POST',
     body: {
       email: String(email || '').trim().toLowerCase(),
@@ -24,47 +28,34 @@ export async function loginUser({ email, password }) {
   });
 }
 
-// HU-02: Log de intentos (silencioso)
-export async function logSignInAttempt({ email, success }) {
-  try {
-    await fetchJson('v1/auth/login/logs/', {
-      method: 'POST',
-      body: {
-        email: String(email || '').trim().toLowerCase(),
-        success,
-        ts: new Date().toISOString(),
-      },
-    });
-  } catch {}
+export async function refreshToken({ refresh }) {
+  return await fetchJson(`${AUTH_PREFIX}refresh/`, {
+    method: 'POST',
+    body: { refresh },
+  });
 }
 
-// HU-03: Solicitud de restablecimiento
 export async function requestPasswordReset({ email }) {
-  return await fetchJson('v1/auth/password/reset/', {
+  return await fetchJson(`${AUTH_PREFIX}password/forgot/`, {
     method: 'POST',
     body: { email: String(email || '').trim().toLowerCase() },
   });
 }
 
-// HU-03: Confirmación de restablecimiento
-export async function confirmPasswordReset({ token, password }) {
-  return await fetchJson('v1/auth/password/reset/confirm/', {
-    method: 'POST',
-    body: { token: String(token || ''), password },
-  });
+export async function validateResetToken({ token }) {
+  const path = `${AUTH_PREFIX}password/reset/validate/?token=${encodeURIComponent(
+    String(token || ''),
+  )}`;
+  return await fetchJson(path);
 }
 
-// HU-03: Log de eventos de contraseña (silencioso)
-export async function logPasswordEvent({ email = '', action, success }) {
-  try {
-    await fetchJson('v1/auth/password/logs/', {
-      method: 'POST',
-      body: {
-        email: String(email || '').trim().toLowerCase(),
-        action,
-        success: Boolean(success),
-        ts: new Date().toISOString(),
-      },
-    });
-  } catch {}
+export async function confirmPasswordReset({ token, password, confirm }) {
+  return await fetchJson(`${AUTH_PREFIX}password/reset/`, {
+    method: 'POST',
+    body: {
+      token: String(token || ''),
+      password,
+      password2: confirm ?? password,
+    },
+  });
 }
