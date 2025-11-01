@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { confirmPasswordReset, validateResetToken } from './api';
 
@@ -43,37 +43,51 @@ function parseDrfErrors(data) {
   return { fieldErrors, globalMessage };
 }
 
-export default function ResetPassword() {
-  const { token } = useParams();
+export default function ResetPassword({
+  isModal = false,
+  onClose,
+  token: tokenProp,
+  email: emailProp,
+  onRequestToken,
+} = {}) {
+  const params = useParams();
+  const routeToken = params?.token;
+  const effectiveToken = useMemo(() => tokenProp ?? routeToken ?? '', [tokenProp, routeToken]);
+  const effectiveEmail = emailProp ? String(emailProp).trim().toLowerCase() : '';
+  const hasToken = Boolean(effectiveToken);
+  const canSkipToken = !hasToken && Boolean(effectiveEmail);
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [clientErrors, setClientErrors] = useState({});
   const [serverErrors, setServerErrors] = useState({});
-  const [globalError, setGlobalError] = useState(token ? '' : 'Token invalido o expirado.');
+  const [globalError, setGlobalError] = useState(canSkipToken ? '' : hasToken ? '' : 'Token invalido o expirado.');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tokenIssue, setTokenIssue] = useState(!token);
+  const [tokenIssue, setTokenIssue] = useState(!hasToken && !canSkipToken);
 
   const passwordError = clientErrors.password || serverErrors.password;
   const confirmError = clientErrors.confirmPassword || serverErrors.confirmPassword;
+  const showCloseButton = isModal && typeof onClose === 'function';
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (!token) {
-      setGlobalError('Token invalido o expirado.');
-      setTokenIssue(true);
-      return () => {
-        cancelled = true;
-      };
+    if (!hasToken) {
+      setTokenIssue(!canSkipToken);
+      if (!canSkipToken) {
+        setGlobalError('Token invalido o expirado.');
+      } else if (!successMessage) {
+        setGlobalError('');
+      }
+      return;
     }
 
+    let cancelled = false;
     setTokenIssue(false);
     setGlobalError('');
 
     (async () => {
       try {
-        await validateResetToken({ token });
+        await validateResetToken({ token: effectiveToken });
       } catch (error) {
         if (cancelled) return;
         const message =
@@ -88,7 +102,7 @@ export default function ResetPassword() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [canSkipToken, effectiveToken, hasToken, successMessage]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -112,20 +126,27 @@ export default function ResetPassword() {
       nextClientErrors.confirmPassword = 'Las contrasenas no coinciden';
     }
 
-    if (!token) {
-      setGlobalError('Token invalido o expirado.');
-      setTokenIssue(true);
+    if (Object.keys(nextClientErrors).length > 0) {
+      setClientErrors(nextClientErrors);
+      return;
     }
 
-    if (Object.keys(nextClientErrors).length > 0 || !token) {
-      setClientErrors(nextClientErrors);
+    if (!hasToken && !canSkipToken) {
+      setGlobalError('Token invalido o expirado.');
+      setTokenIssue(true);
       return;
     }
 
     setLoading(true);
 
     try {
-      await confirmPasswordReset({ token, password, confirm: confirmPassword });
+      await confirmPasswordReset({
+        token: hasToken ? effectiveToken : undefined,
+        email: canSkipToken ? effectiveEmail : undefined,
+        password,
+        confirm: confirmPassword,
+      });
+
       setServerErrors({});
       setClientErrors({});
       setSuccessMessage('Contrasena restablecida correctamente. Ya puedes iniciar sesion.');
@@ -146,108 +167,143 @@ export default function ResetPassword() {
     }
   };
 
-  return (
-    <section className="form" aria-labelledby="reset-password-title">
-      <div className="form-card">
-        <div className="form-header">
-          <div className="form-icon" aria-hidden="true">
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z"
-                fill="#7A4D14"
-              />
-            </svg>
-          </div>
-          <h2 id="reset-password-title">Restablecer contrasena</h2>
-          <p>Ingresa una nueva contrasena segura para tu cuenta.</p>
+  const cardContent = (
+    <div className="form-card">
+      <div className="form-header modal-header">
+        <div className="form-icon" aria-hidden="true">
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z"
+              fill="#7A4D14"
+            />
+          </svg>
         </div>
-
-        {successMessage ? (
-          <div className="alert success" role="status" aria-live="polite">
-            <div className="alert-message">
-              <span>{successMessage}</span>
-            </div>
-            <Link className="secondary full-width" to="/login">
-              Ir a iniciar sesion
-            </Link>
-          </div>
+        <h2 id="reset-password-title">Restablecer contrasena</h2>
+        <p>Ingresa una nueva contrasena segura para tu cuenta.</p>
+        {showCloseButton ? (
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
         ) : null}
+      </div>
 
-        {globalError && !successMessage ? (
-          <div className="alert error" role="alert" aria-live="assertive">
-            <p>{globalError}</p>
-            {tokenIssue ? (
-              <Link className="secondary full-width" to="/forgot-password">
+      {successMessage ? (
+        <div className="alert success" role="status" aria-live="polite">
+          <div className="alert-message">
+            <span>{successMessage}</span>
+          </div>
+          <Link className="secondary full-width" to="/login" onClick={onClose}>
+            Ir a iniciar sesion
+          </Link>
+        </div>
+      ) : null}
+
+      {globalError && !successMessage ? (
+        <div className="alert error" role="alert" aria-live="assertive">
+          <p>{globalError}</p>
+          {tokenIssue && !canSkipToken ? (
+            onRequestToken ? (
+              <button
+                type="button"
+                className="secondary full-width"
+                onClick={onRequestToken}
+              >
+                Volver a solicitar enlace
+              </button>
+            ) : (
+              <Link className="secondary full-width" to="/forgot-password" onClick={onClose}>
                 Volver a solicitar enlace
               </Link>
-            ) : null}
-          </div>
-        ) : null}
+            )
+          ) : null}
+        </div>
+      ) : null}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="field">
-            <label htmlFor="reset-password">Nueva contrasena</label>
-            <input
-              id="reset-password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              aria-required="true"
-              aria-invalid={Boolean(passwordError)}
-              aria-describedby={
-                passwordError ? 'reset-password-error reset-password-hint' : 'reset-password-hint'
-              }
-              className={passwordError ? 'has-error' : ''}
-              disabled={loading}
-              required
-            />
-            <p id="reset-password-hint" className="hint">
-              Debe cumplir la politica de seguridad.
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="field">
+          <label htmlFor="reset-password">Nueva contrasena</label>
+          <input
+            id="reset-password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            aria-required="true"
+            aria-invalid={Boolean(passwordError)}
+            aria-describedby={passwordError ? 'reset-password-error reset-password-hint' : 'reset-password-hint'}
+            className={passwordError ? 'has-error' : ''}
+            disabled={loading}
+            required
+          />
+          <p id="reset-password-hint" className="hint">
+            Debe cumplir la politica de seguridad.
+          </p>
+          {passwordError ? (
+            <p id="reset-password-error" className="error" role="alert">
+              {passwordError}
             </p>
-            {passwordError ? (
-              <p id="reset-password-error" className="error" role="alert">
-                {passwordError}
-              </p>
-            ) : null}
-          </div>
+          ) : null}
+        </div>
 
-          <div className="field">
-            <label htmlFor="reset-confirm-password">Confirmar contrasena</label>
-            <input
-              id="reset-confirm-password"
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              aria-required="true"
-              aria-invalid={Boolean(confirmError)}
-              aria-describedby={confirmError ? 'reset-confirm-password-error' : undefined}
-              className={confirmError ? 'has-error' : ''}
-              disabled={loading}
-              required
-            />
-            {confirmError ? (
-              <p id="reset-confirm-password-error" className="error" role="alert">
-                {confirmError}
-              </p>
-            ) : null}
-          </div>
+        <div className="field">
+          <label htmlFor="reset-confirm-password">Confirmar contrasena</label>
+          <input
+            id="reset-confirm-password"
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            aria-required="true"
+            aria-invalid={Boolean(confirmError)}
+            aria-describedby={confirmError ? 'reset-confirm-password-error' : undefined}
+            className={confirmError ? 'has-error' : ''}
+            disabled={loading}
+            required
+          />
+          {confirmError ? (
+            <p id="reset-confirm-password-error" className="error" role="alert">
+              {confirmError}
+            </p>
+          ) : null}
+        </div>
 
-          <div className="actions">
-            <button type="submit" className="primary full-width" disabled={loading}>
-              {loading ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </form>
+        <div className="actions">
+          <button type="submit" className="primary full-width" disabled={loading}>
+            {loading ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+
+  if (isModal) {
+    return (
+      <div
+        className="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reset-password-title"
+      >
+        <div className="modal-card">{cardContent}</div>
       </div>
+    );
+  }
+
+  return (
+    <section className="form" aria-labelledby="reset-password-title">
+      {cardContent}
     </section>
   );
 }

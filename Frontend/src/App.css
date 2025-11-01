@@ -417,6 +417,7 @@ button.secondary:hover:not(:disabled) {
   min-height: 100vh;
   padding: 24px;
   background: #f6f7fb;
+  width: min(100%, 720px);
 }
 
 /* CARD WRAPPER */
@@ -439,10 +440,76 @@ button.secondary:hover:not(:disabled) {
   gap: 1.5rem;
 }
 
+.forgot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .register-card .strength {
   gap: 0.35rem;
 }
 
 .register-card .strength-meter {
   margin-top: 0.25rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.modal-card {
+  width: min(100%, 640px);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.25);
+  background: transparent;
+}
+
+.modal-card .form-card {
+  box-shadow: none;
+  border-radius: 18px;
+  padding: 32px 36px;
+}
+
+.modal-header {
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  border: none;
+  background: #fff2d8;
+  color: #b45309;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 8px 16px rgba(180, 83, 9, 0.25);
+}
+
+.modal-close:hover {
+  background: #fde68a;
+}
+
+.modal-close:focus-visible {
+  outline: 3px solid rgba(245, 158, 11, 0.5);
+  outline-offset: 2px;
 }

@@ -37,7 +37,11 @@ function parseDrfErrors(data) {
   return { fieldErrors, globalMessage };
 }
 
-export default function ForgotPassword() {
+export default function ForgotPassword({
+  isModal = false,
+  onClose,
+  onSuccess,
+} = {}) {
   const [email, setEmail] = useState('');
   const [clientErrors, setClientErrors] = useState({});
   const [serverErrors, setServerErrors] = useState({});
@@ -46,6 +50,15 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
 
   const emailError = clientErrors.email || serverErrors.email;
+  const showCloseButton = isModal && typeof onClose === 'function';
+
+  const resetForm = () => {
+    setEmail('');
+    setClientErrors({});
+    setServerErrors({});
+    setGlobalError('');
+    setSuccessMessage('');
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -72,7 +85,14 @@ export default function ForgotPassword() {
     const normalizedEmail = normalizeEmail(trimmedEmail);
 
     try {
-      await requestPasswordReset({ email: normalizedEmail });
+      const response = await requestPasswordReset({ email: normalizedEmail });
+
+      if (isModal && typeof onSuccess === 'function') {
+        onSuccess({ email: normalizedEmail, response });
+        resetForm();
+        return;
+      }
+
       setSuccessMessage('Si existe una cuenta, enviamos un enlace.');
     } catch (error) {
       const { fieldErrors, globalMessage } = parseDrfErrors(error?.data);
@@ -83,74 +103,101 @@ export default function ForgotPassword() {
     }
   };
 
-  return (
-    <section className="form" aria-labelledby="forgot-password-title">
-      <div className="form-card">
-        <div className="form-header">
-          <div className="form-icon" aria-hidden="true">
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z"
-                fill="#7A4D14"
-              />
-            </svg>
+  const cardContent = (
+    <div className="form-card">
+      <div className="form-header modal-header">
+        <div className="form-icon" aria-hidden="true">
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5Zm0 2c-3.866 0-7 3.134-7 7 0 .552.448 1 1 1h12c.552 0 1-.448 1-1 0-3.866-3.134-7-7-7Z"
+              fill="#7A4D14"
+            />
+          </svg>
+        </div>
+        <h2 id="forgot-password-title">Olvide mi contraseña</h2>
+        <p>Te enviaremos un enlace para restablecerla.</p>
+        {showCloseButton ? (
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        ) : null}
+      </div>
+
+      {successMessage ? (
+        <div className="alert success" role="status" aria-live="polite">
+          <div className="alert-message">
+            <span>{successMessage}</span>
           </div>
-          <h2 id="forgot-password-title">Olvide mi contraseña</h2>
-          <p>Te enviaremos un enlace para restablecerla.</p>
+        </div>
+      ) : null}
+
+      {globalError && !successMessage ? (
+        <div className="alert error" role="alert" aria-live="assertive">
+          {globalError}
+        </div>
+      ) : null}
+
+      <form className="forgot-form" onSubmit={handleSubmit} noValidate>
+        <div className="field">
+          <label htmlFor="forgot-email">Correo electronico</label>
+          <input
+            id="forgot-email"
+            type="email"
+            autoComplete="email"
+            placeholder="ejemplo@email.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            aria-required="true"
+            aria-invalid={Boolean(emailError)}
+            aria-describedby={emailError ? 'forgot-email-error' : undefined}
+            className={emailError ? 'has-error' : ''}
+            disabled={loading}
+            required
+          />
+          {emailError ? (
+            <p id="forgot-email-error" className="error" role="alert">
+              {emailError}
+            </p>
+          ) : null}
         </div>
 
-        {successMessage ? (
-          <div className="alert success" role="status" aria-live="polite">
-            <div className="alert-message">
-              <span>{successMessage}</span>
-            </div>
-          </div>
-        ) : null}
+        <div className="actions">
+          <button type="submit" className="primary full-width" disabled={loading}>
+            {loading ? (isModal ? 'Validando...' : 'Enviando...') : isModal ? 'Validar email' : 'Enviar enlace'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 
-        {globalError && !successMessage ? (
-          <div className="alert error" role="alert" aria-live="assertive">
-            {globalError}
-          </div>
-        ) : null}
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="field">
-            <label htmlFor="forgot-email">Correo electronico</label>
-            <input
-              id="forgot-email"
-              type="email"
-              autoComplete="email"
-              placeholder="ejemplo@email.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              aria-required="true"
-              aria-invalid={Boolean(emailError)}
-              aria-describedby={emailError ? 'forgot-email-error' : undefined}
-              className={emailError ? 'has-error' : ''}
-              disabled={loading}
-              required
-            />
-            {emailError ? (
-              <p id="forgot-email-error" className="error" role="alert">
-                {emailError}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="actions">
-            <button type="submit" className="primary full-width" disabled={loading}>
-              {loading ? 'Enviando...' : 'Enviar enlace'}
-            </button>
-          </div>
-        </form>
+  if (isModal) {
+    return (
+      <div
+        className="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forgot-password-title"
+      >
+        <div className="modal-card">{cardContent}</div>
       </div>
+    );
+  }
+
+  return (
+    <section className="form" aria-labelledby="forgot-password-title">
+      {cardContent}
     </section>
   );
 }

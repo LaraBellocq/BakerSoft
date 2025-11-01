@@ -49,11 +49,12 @@ export async function validateResetToken({ token }) {
   return await fetchJson(path);
 }
 
-export async function confirmPasswordReset({ token, password, confirm }) {
+export async function confirmPasswordReset({ token, email, password, confirm }) {
   return await fetchJson(`${AUTH_PREFIX}password/reset/`, {
     method: 'POST',
     body: {
-      token: String(token || ''),
+      ...(token ? { token: String(token) } : {}),
+      ...(email ? { email: String(email).trim().toLowerCase() } : {}),
       password,
       password2: confirm ?? password,
     },
