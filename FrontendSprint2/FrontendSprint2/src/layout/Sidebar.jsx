@@ -11,7 +11,7 @@ const mainLinks = [
 ];
 const footerItem = { label: 'Configuraciones', to: '/configuraciones', icon: '⚙️' };
 const productsSubmenuItems = [
-  { label: 'Productos', to: '/productos' },
+  { label: 'Productos', to: '/productos', exact: true },
   { label: 'Tipo de Producto', to: '/productos/tipos' },
   { label: 'Stock', to: '/productos/stock' },
 ];
@@ -87,6 +87,7 @@ function Sidebar() {
                 to={item.to}
                 role="menuitem"
                 className={({ isActive }) => clsx('app-submenu-link', { active: isActive })}
+                end={Boolean(item.exact)}
               >
                 {item.label}
               </NavLink>
