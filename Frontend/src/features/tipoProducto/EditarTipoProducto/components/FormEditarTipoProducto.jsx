@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import InputField from '../../HU01-AltaProducto/components/InputField.jsx';
-import ImageUpload from '../../HU01-AltaProducto/components/ImageUpload.jsx';
-import SwitchActivo from '../../HU01-AltaProducto/components/SwitchActivo.jsx';
-import ModalConfirmacion from '../../HU03-BajaTipoProducto/components/ModalConfirmacion.jsx';
+import InputField from '../../AltaProducto/components/InputField.jsx';
+import ImageUpload from '../../AltaProducto/components/ImageUpload.jsx';
+import SwitchActivo from '../../AltaProducto/components/SwitchActivo.jsx';
+import ModalConfirmacion from '../../BajaTipoProducto/components/ModalConfirmacion.jsx';
 
 function FormEditarTipoProducto({ product }) {
   const navigate = useNavigate();

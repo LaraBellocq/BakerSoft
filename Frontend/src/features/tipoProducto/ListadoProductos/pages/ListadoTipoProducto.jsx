@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import BuscadorTipoProducto from '../components/BuscadorTipoProducto.jsx';
 import BotonNuevoProducto from '../components/BotonNuevoProducto.jsx';
 import TablaTiposProducto from '../components/TablaTiposProducto.jsx';
-import { FiltroTipoProducto, MensajeResultados, MensajeSinResultados } from '../../HU04-ConsultaTipoProducto/index.js';
-import '../../HU04-ConsultaTipoProducto/styles/ConsultaTipoProducto.css';
+import { FiltroTipoProducto, MensajeResultados, MensajeSinResultados } from '../../ConsultaProducto/index.js';
+import '../../ConsultaProducto/styles/ConsultaTipoProducto.css';
 import '../styles/ListadoTipoProducto.css';
 
 const tiposProductoMock = [

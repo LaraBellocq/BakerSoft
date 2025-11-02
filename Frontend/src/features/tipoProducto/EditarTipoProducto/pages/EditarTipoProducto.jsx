@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import FormEditarTipoProducto from '../components/FormEditarTipoProducto.jsx';
 import '../styles/EditarTipoProducto.css';
-import '../../HU01-AltaProducto/styles/AltaTipoProducto.css';
+import '../../AltaProducto/styles/AltaTipoProducto.css';
 
 const tiposProductoMock = [
   {
