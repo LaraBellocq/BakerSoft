@@ -62,3 +62,27 @@ def test_activo_false_guarda_inactivo():
     assert resp.status_code == 201
     tipo = TipoProducto.objects.get(nombre="Sandwichería")
     assert tipo.estado == TipoProducto.ESTADO_INACTIVO
+
+
+def test_eliminar_tipo_producto_exitoso():
+    client = _authenticated_client()
+    tipo = TipoProducto.objects.create(
+        nombre="Pastas",
+        descripcion="Variedad de pastas",
+        estado=TipoProducto.ESTADO_ACTIVO,
+    )
+
+    resp = client.delete(f"{URL}{tipo.id_tipoproducto}/")
+
+    assert resp.status_code == 200
+    assert resp.data["message"] == "Tipo de producto eliminado correctamente."
+    assert not TipoProducto.objects.filter(pk=tipo.pk).exists()
+
+
+def test_eliminar_tipo_producto_inexistente_devuelve_404():
+    client = _authenticated_client()
+
+    resp = client.delete(f"{URL}9999/")
+
+    assert resp.status_code == 404
+    assert resp.data["error"] == "No se encontró el tipo de producto solicitado."

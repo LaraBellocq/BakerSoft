@@ -109,3 +109,30 @@ export const getTiposProducto = async ({ search } = {}) => {
   }
 };
 
+export const deleteTipoProducto = async (id) => {
+  try {
+    const response = await fetch(`${COLLECTION_PATH}/${id}/`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await ensureJson(response);
+      throw new Error(
+        errorData.error || errorData.message || 'Error al eliminar el tipo de producto'
+      );
+    }
+
+    if (response.status === 204) {
+      return null;
+    }
+
+    return await ensureJson(response);
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+};
+

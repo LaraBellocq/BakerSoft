@@ -1,5 +1,7 @@
 import logging
 
+from django.db import IntegrityError
+from django.db.models import ProtectedError
 from django.http import Http404
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import NotFound
@@ -103,17 +105,38 @@ class TipoProductoEstadoUpdateView(generics.UpdateAPIView):
         return Response({"message": message}, status=status.HTTP_200_OK)
 
 
-class TipoProductoDetailView(generics.RetrieveAPIView):
+class TipoProductoDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = TipoProductoListSerializer
     permission_classes = [permissions.AllowAny]
     queryset = TipoProducto.objects.all()
     lookup_field = "id_tipoproducto"
+    http_method_names = ["get", "delete"]
 
     def get_object(self):
         try:
             return super().get_object()
         except Http404 as exc:
             raise NotFound(detail={"error": "No se encontró el tipo de producto solicitado."}) from exc
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+        except ProtectedError:
+            return Response(
+                {"error": "No se puede eliminar el tipo de producto porque posee relaciones asociadas."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except IntegrityError:
+            return Response(
+                {"error": "Ocurrió un error al eliminar el tipo de producto."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"message": "Tipo de producto eliminado correctamente."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class TipoProductoListView(generics.ListAPIView):

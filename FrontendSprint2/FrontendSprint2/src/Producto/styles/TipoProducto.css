@@ -68,3 +68,87 @@
 .tp-action-button:hover {
   background-color: rgba(240, 129, 26, 0.1);
 }
+
+.tp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.tp-modal {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+}
+
+.tp-modal-header h2 {
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+  color: #1f2933;
+}
+
+.tp-modal-description {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.tp-modal-error {
+  margin-top: 12px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+.tp-modal-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.tp-modal-button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.tp-modal-button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.tp-modal-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+.tp-modal-button-secondary {
+  background: #f8fafc;
+  color: #1f2933;
+}
+
+.tp-modal-button-secondary:not(:disabled):hover {
+  background: #e2e8f0;
+}
+
+.tp-modal-button-danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.tp-modal-button-danger:not(:disabled):hover {
+  background: #b91c1c;
+}
