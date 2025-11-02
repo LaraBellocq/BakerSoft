@@ -1,15 +1,17 @@
-﻿import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import './AppLayout.css';
+import { useAuth } from '../features/auth/AuthContext.jsx';
+import { getUserEmail, getUserInitials, getUserName } from '../features/auth/userUtils.js';
 
-const homeLink = { label: 'Inicio', to: '/', exact: true, icon: '🏠' };
+const homeLink = { label: 'Inicio', to: '/', exact: true, icon: '??' };
 const mainLinks = [
-  { label: 'Pedidos', to: '/pedidos', icon: '🧾' },
-  { label: 'Clientes', to: '/clientes', icon: '👥' },
-  { label: 'Finanzas', to: '/finanzas', icon: '💰' },
+  { label: 'Pedidos', to: '/pedidos', icon: '??' },
+  { label: 'Clientes', to: '/clientes', icon: '??' },
+  { label: 'Finanzas', to: '/finanzas', icon: '??' },
 ];
-const footerItem = { label: 'Configuraciones', to: '/configuraciones', icon: '⚙️' };
+const footerItem = { label: 'Configuraciones', to: '/configuraciones', icon: '??' };
 const productsSubmenuItems = [
   { label: 'Productos', to: '/productos', exact: true },
   { label: 'Tipo de Producto', to: '/productos/tipos' },
@@ -20,8 +22,10 @@ const productsSubmenuId = 'sidebar-products-submenu';
 
 function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isProductsRoute = location.pathname.startsWith('/productos');
   const [isProductsOpen, setIsProductsOpen] = useState(isProductsRoute);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     setIsProductsOpen(isProductsRoute);
@@ -37,14 +41,33 @@ function Sidebar() {
     setIsProductsOpen((prev) => !prev);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  const initials = useMemo(() => getUserInitials(user), [user]);
+  const displayName = useMemo(() => getUserName(user) || 'Usuario', [user]);
+  const email = useMemo(() => getUserEmail(user), [user]);
+
   return (
     <aside className="app-sidebar">
       <div className="app-brand">
-        <span className="app-brand-title">Panadería</span>
+        <span className="app-brand-title">Panaderia</span>
         <span className="app-brand-subtitle">PELLEGRINI</span>
       </div>
 
-      <nav className="app-menu" aria-label="Menú principal">
+      <div className="app-user-summary">
+        <div className="app-user-avatar" aria-hidden="true">
+          <span>{initials}</span>
+        </div>
+        <div className="app-user-meta">
+          <span className="app-user-name">{displayName}</span>
+          {email ? <span className="app-user-email">{email}</span> : null}
+        </div>
+      </div>
+
+      <nav className="app-menu" aria-label="Menu principal">
         <NavLink
           key="inicio"
           to={homeLink.to}
@@ -70,7 +93,7 @@ function Sidebar() {
             role="menuitem"
           >
             <span className="app-menu-icon" aria-hidden="true">
-              🍞
+              ??
             </span>
             <span className="app-menu-label">Productos</span>
           </button>
@@ -79,7 +102,7 @@ function Sidebar() {
             id={productsSubmenuId}
             className={clsx('app-submenu', { open: isProductsOpen })}
             role="group"
-            aria-label="Submenú Productos"
+            aria-label="Submenu Productos"
           >
             {productsSubmenuItems.map((item) => (
               <NavLink
@@ -124,12 +147,15 @@ function Sidebar() {
           </span>
           <span className="app-menu-label">{footerItem.label}</span>
         </NavLink>
+        <button type="button" className="app-menu-link app-menu-logout" onClick={handleLogout}>
+          <span className="app-menu-icon" aria-hidden="true">
+            ⎋
+          </span>
+          <span className="app-menu-label">Cerrar sesion</span>
+        </button>
       </div>
     </aside>
   );
 }
 
 export default Sidebar;
-
-
-

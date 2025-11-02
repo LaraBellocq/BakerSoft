@@ -1,141 +1,157 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
-const COLLECTION_PATH = `${API_BASE_URL}/tipo-producto`;
+import { fetchJson } from './api.js';
 
-const ensureJson = async (response) => {
-  try {
-    return await response.json();
-  } catch (error) {
-    return {};
+const COLLECTION_PATH = 'v1/tipo-producto/';
+
+function buildPath(suffix = '') {
+  return `${COLLECTION_PATH}${suffix}`;
+}
+
+function pickFirstString(value) {
+  if (typeof value === 'string' && value.trim()) {
+    return value;
   }
-};
 
-export const updateTipoProducto = async (id, tipoProductoData) => {
-  try {
-    const response = await fetch(`${COLLECTION_PATH}/${id}/actualizar/`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(tipoProductoData),
-    });
-
-    if (!response.ok) {
-      const errorData = await ensureJson(response);
-      throw new Error(errorData.error || 'Error al actualizar el tipo de producto');
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (typeof item === 'string' && item.trim()) {
+        return item;
+      }
     }
-
-    return await ensureJson(response);
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
   }
-};
 
-export const getTipoProductoById = async (id) => {
-  try {
-    const response = await fetch(`${COLLECTION_PATH}/${id}/`);
+  if (value && typeof value === 'object') {
+    return extractNestedMessage(value);
+  }
 
-    if (!response.ok) {
-      const errorData = await ensureJson(response);
-      throw new Error(errorData.error || 'Error al obtener el tipo de producto');
+  return '';
+}
+
+function extractNestedMessage(data) {
+  if (!data || typeof data !== 'object') {
+    return '';
+  }
+
+  for (const key of Object.keys(data)) {
+    const message = pickFirstString(data[key]);
+    if (message) {
+      return message;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
   }
-};
 
-export const createTipoProducto = async (tipoProductoData) => {
+  return '';
+}
+
+function resolveErrorMessage(error, fallbackMessage) {
+  const data = error?.data;
+  if (!data) {
+    return fallbackMessage;
+  }
+
+  if (typeof data === 'string' && data.trim()) {
+    return data;
+  }
+
+  const directMessage =
+    (typeof data.message === 'string' && data.message.trim()) ||
+    (typeof data.error === 'string' && data.error.trim()) ||
+    (typeof data.detail === 'string' && data.detail.trim()) ||
+    (Array.isArray(data.non_field_errors) && data.non_field_errors[0]);
+
+  if (directMessage) {
+    return directMessage;
+  }
+
+  const nested = extractNestedMessage(data);
+  return nested || fallbackMessage;
+}
+
+function normalizeApiError(error, fallbackMessage) {
+  const message = resolveErrorMessage(error, fallbackMessage);
+  const normalized = new Error(message || fallbackMessage);
+  if (error && typeof error === 'object') {
+    normalized.status = error.status;
+    normalized.data = error.data;
+  }
+  return normalized;
+}
+
+async function withErrorHandling(action, fallbackMessage) {
   try {
-    const response = await fetch(`${COLLECTION_PATH}/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        nombre: tipoProductoData.nombre,
-        descripcion: tipoProductoData.descripcion,
-        activo: true,
+    return await action();
+  } catch (error) {
+    throw normalizeApiError(error, fallbackMessage);
+  }
+}
+
+export async function updateTipoProducto(id, tipoProductoData) {
+  return withErrorHandling(
+    () =>
+      fetchJson(buildPath(`${id}/actualizar/`), {
+        method: 'PUT',
+        body: tipoProductoData,
+        auth: true,
       }),
-    });
+    'Error al actualizar el tipo de producto',
+  );
+}
 
-    if (!response.ok) {
-      const errorData = await ensureJson(response);
-      throw new Error(errorData.message || 'Error al crear el tipo de producto');
-    }
+export async function getTipoProductoById(id) {
+  return withErrorHandling(
+    () =>
+      fetchJson(buildPath(`${id}/`), {
+        auth: true,
+      }),
+    'Error al obtener el tipo de producto',
+  );
+}
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
-  }
-};
+export async function createTipoProducto(tipoProductoData) {
+  return withErrorHandling(
+    () =>
+      fetchJson(buildPath(), {
+        method: 'POST',
+        body: {
+          nombre: tipoProductoData.nombre,
+          descripcion: tipoProductoData.descripcion,
+          activo: true,
+        },
+        auth: true,
+      }),
+    'Error al crear el tipo de producto',
+  );
+}
 
-export const getTiposProducto = async ({ search, signal } = {}) => {
-  try {
-    const queryParams = new URLSearchParams();
+export async function getTiposProducto({ search, signal } = {}) {
+  return withErrorHandling(async () => {
+    const params = new URLSearchParams();
     if (search) {
-      queryParams.append('search', search);
+      params.set('search', String(search).trim());
     }
 
-    const queryString = queryParams.toString();
-    const response = await fetch(`${COLLECTION_PATH}/${queryString ? `?${queryString}` : ''}`, {
-      headers: {
-        Accept: 'application/json',
-      },
+    const suffix = params.toString();
+    const data = await fetchJson(buildPath(suffix ? `?${suffix}` : ''), {
+      auth: true,
       signal,
     });
 
-    if (!response.ok) {
-      const data = await ensureJson(response);
-      const error = new Error(data.message || 'Error al obtener los tipos de producto');
-      error.status = response.status;
-      throw error;
+    if (Array.isArray(data)) {
+      return {
+        count: data.length,
+        results: data,
+      };
     }
 
-    const data = await response.json();
-    if (!Array.isArray(data)) {
-      return data;
-    }
+    return data ?? { count: 0, results: [] };
+  }, 'Error al obtener los tipos de producto');
+}
 
-    return {
-      count: data.length,
-      results: data,
-    };
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
-  }
-};
-
-export const deleteTipoProducto = async (id) => {
-  try {
-    const response = await fetch(`${COLLECTION_PATH}/${id}/`, {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await ensureJson(response);
-      throw new Error(
-        errorData.error || errorData.message || 'Error al eliminar el tipo de producto'
-      );
-    }
-
-    if (response.status === 204) {
-      return null;
-    }
-
-    return await ensureJson(response);
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
-  }
-};
-
+export async function deleteTipoProducto(id) {
+  return withErrorHandling(
+    () =>
+      fetchJson(buildPath(`${id}/`), {
+        method: 'DELETE',
+        auth: true,
+      }),
+    'Error al eliminar el tipo de producto',
+  );
+}

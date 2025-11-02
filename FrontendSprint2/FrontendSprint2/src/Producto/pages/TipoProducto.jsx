@@ -1,11 +1,15 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../features/auth/AuthContext.jsx';
+import { getUserInitials, getUserName } from '../../features/auth/userUtils.js';
 import '../styles/TipoProducto.css';
 import { getTiposProducto, deleteTipoProducto } from '../../services/tipoProductoService';
 
 function TipoProducto() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [tiposProducto, setTiposProducto] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,6 +18,7 @@ function TipoProducto() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
+
   const abortControllerRef = useRef(null);
   const retryTimeoutRef = useRef(null);
   const hasAppliedRefreshRef = useRef(false);
@@ -86,8 +91,8 @@ function TipoProducto() {
             retryTimeoutRef.current = null;
           }, 2000);
         } else {
-          setError('Error al cargar los tipos de producto');
-          console.error(err);
+          const message = err?.message || 'Error al cargar los tipos de producto';
+          setError(message);
         }
       } finally {
         if (!cancelled && !keepLoading) {
@@ -148,6 +153,9 @@ function TipoProducto() {
     }
   };
 
+  const userInitials = useMemo(() => getUserInitials(user), [user]);
+  const userName = useMemo(() => getUserName(user) || 'Perfil', [user]);
+
   return (
     <div className="tp-main">
       {deleteTarget ? (
@@ -191,8 +199,8 @@ function TipoProducto() {
         <div>
           <h1 className="tp-page-title">Lista de tipos de producto</h1>
         </div>
-        <div className="tp-user-badge" title="Perfil">
-          <span>AP</span>
+        <div className="tp-user-badge" title={userName} aria-label={`Perfil de ${userName}`}>
+          <span aria-hidden="true">{userInitials}</span>
         </div>
       </header>
 
@@ -226,7 +234,7 @@ function TipoProducto() {
               <tr>
                 <th className="tp-th">ID</th>
                 <th className="tp-th">Nombre</th>
-                <th className="tp-th">Descripción</th>
+                <th className="tp-th">Descripcion</th>
                 <th className="tp-th">Estado</th>
                 <th className="tp-th tp-actions">Acciones</th>
               </tr>
@@ -263,7 +271,7 @@ function TipoProducto() {
                         onClick={() => navigate(`/productos/tipos/editar/${tipo.id}`)}
                         aria-label={`Editar ${tipo.nombre}`}
                       >
-                        ✏️
+                        ??
                       </button>
                       <button
                         className="tp-action-button tp-action-delete"
@@ -271,7 +279,7 @@ function TipoProducto() {
                         aria-label={`Eliminar ${tipo.nombre}`}
                         disabled={isDeleting && deleteTarget?.id === tipo.id}
                       >
-                        🗑️
+                        ???
                       </button>
                     </td>
                   </tr>

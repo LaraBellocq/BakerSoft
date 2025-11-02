@@ -6,9 +6,62 @@ import InputField from './InputField.jsx';
 import ImageUpload from './ImageUpload.jsx';
 import SwitchActivo from './SwitchActivo.jsx';
 import ModalConfirmacion from './ModalConfirmacion.jsx';
+import { fetchJson } from '../../services/api.js';
+
+const DEFAULT_ERROR_MESSAGE = 'Ocurrio un problema al actualizar el producto.';
+
+function resolveApiMessage(error, fallbackMessage = DEFAULT_ERROR_MESSAGE) {
+  if (!error) {
+    return fallbackMessage;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  const data = error?.data;
+  if (typeof data === 'string' && data.trim()) {
+    return data.trim();
+  }
+
+  const direct =
+    (typeof data?.message === 'string' && data.message.trim()) ||
+    (typeof data?.error === 'string' && data.error.trim()) ||
+    (typeof data?.detail === 'string' && data.detail.trim()) ||
+    (Array.isArray(data?.non_field_errors) && data.non_field_errors.length
+      ? data.non_field_errors[0]
+      : null);
+  if (typeof direct === 'string' && direct.trim()) {
+    return direct.trim();
+  }
+
+  if (data && typeof data === 'object') {
+    for (const value of Object.values(data)) {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+      if (Array.isArray(value)) {
+        const nested = value.find((item) => typeof item === 'string' && item.trim());
+        if (nested) {
+          return nested.trim();
+        }
+      }
+    }
+  }
+
+  if (error instanceof Error) {
+    const genericPattern = /^HTTP\s+\d+/i;
+    if (error.message && !genericPattern.test(error.message)) {
+      return error.message.trim();
+    }
+  }
+
+  return fallbackMessage;
+}
 
 function FormEditarProducto({ productId, product }) {
   const navigate = useNavigate();
+
   const initialState = useMemo(
     () => ({
       code: product.code ?? '',
@@ -98,16 +151,16 @@ function FormEditarProducto({ productId, product }) {
   const validate = () => {
     const nextErrors = {};
     if (!formValues.category?.trim()) {
-      nextErrors.category = 'La categoría es obligatoria.';
+      nextErrors.category = 'La categoria es obligatoria.';
     }
     if (!formValues.name?.trim()) {
       nextErrors.name = 'El nombre es obligatorio.';
     }
     if (!formValues.price || Number(formValues.price) <= 0) {
-      nextErrors.price = 'Ingrese un precio válido.';
+      nextErrors.price = 'Ingrese un precio valido.';
     }
     if (formValues.description?.length > 250) {
-      nextErrors.description = 'La descripción no puede superar 250 caracteres.';
+      nextErrors.description = 'La descripcion no puede superar 250 caracteres.';
     }
     return nextErrors;
   };
@@ -142,33 +195,15 @@ function FormEditarProducto({ productId, product }) {
     }
 
     try {
-      const response = await fetch(`/api/v1/tipo-producto/${productId}/actualizar/`, {
+      await fetchJson(`v1/tipo-producto/${productId}/actualizar/`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: payload,
+        auth: true,
       });
-
-      if (!response.ok) {
-        let message = 'No se pudo actualizar el producto.';
-        try {
-          const errorBody = await response.json();
-          if (typeof errorBody?.detalle === 'string') {
-            message = errorBody.detalle;
-          }
-        } catch (parseError) {
-          // Ignoramos errores de parseo y dejamos el mensaje genérico.
-        }
-        throw new Error(message);
-      }
-
       setSuccessMessage('Producto actualizado correctamente.');
       setErrorMessage('');
     } catch (submitError) {
-      setErrorMessage(
-        submitError instanceof Error ? submitError.message : 'Ocurrió un problema al actualizar el producto.',
-      );
+      setErrorMessage(resolveApiMessage(submitError));
       setSuccessMessage('');
     } finally {
       setIsSubmitting(false);
@@ -193,9 +228,9 @@ function FormEditarProducto({ productId, product }) {
     setIsModalOpen(false);
 
     if (pendingActive) {
-      setStatusMessage({ type: 'activated', text: 'El producto se activó correctamente.' });
+      setStatusMessage({ type: 'activated', text: 'El producto se activo correctamente.' });
     } else {
-      setStatusMessage({ type: 'deactivated', text: 'El producto se marcó como inactivo.' });
+      setStatusMessage({ type: 'deactivated', text: 'El producto se marco como inactivo.' });
     }
 
     setPendingActive(null);
@@ -210,18 +245,18 @@ function FormEditarProducto({ productId, product }) {
       <div className="etp-form-grid">
         <div className="etp-column">
           <InputField
-            label="Código"
+            label="Codigo"
             name="code"
             value={formValues.code}
             onChange={handleFieldChange}
             required
-            helperText="El código es único; los cambios no serán guardados."
+            helperText="El codigo es unico; los cambios no se guardan."
             disabled
           />
 
           <div className="tp-field">
             <label className="tp-label" htmlFor="category">
-              Categoría<span className="tp-required">*</span>
+              Categoria<span className="tp-required">*</span>
             </label>
             <select
               id="category"
@@ -231,9 +266,9 @@ function FormEditarProducto({ productId, product }) {
               onChange={handleFieldChange}
               required
             >
-              <option value="">Seleccionar categoría</option>
-              <option value="Panadería">Panadería</option>
-              <option value="Pastelería">Pastelería</option>
+              <option value="">Seleccionar categoria</option>
+              <option value="Panaderia">Panaderia</option>
+              <option value="Pasteleria">Pasteleria</option>
             </select>
             {errors.category ? <p className="tp-error">{errors.category}</p> : null}
           </div>
@@ -263,7 +298,7 @@ function FormEditarProducto({ productId, product }) {
           />
 
           <InputField
-            label="Descripción"
+            label="Descripcion"
             name="description"
             value={formValues.description}
             onChange={handleFieldChange}

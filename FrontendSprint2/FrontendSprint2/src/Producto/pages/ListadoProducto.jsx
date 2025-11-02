@@ -1,4 +1,6 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useAuth } from '../../features/auth/AuthContext.jsx';
+import { getUserInitials, getUserName } from '../../features/auth/userUtils.js';
 import BuscadorProducto from '../components/BuscadorProducto.jsx';
 import BotonNuevoProducto from '../components/BotonNuevoProducto.jsx';
 import TablaProductos from '../components/TablaProductos.jsx';
@@ -9,17 +11,18 @@ import '../ConsultaProducto.css';
 import '../ListadoProducto.css';
 
 const productosMock = [
-  { codigo: '001', nombre: 'Pan Francés', categoria: 'Panadería', estado: 'Activo' },
-  { codigo: '002', nombre: 'Medialunas', categoria: 'Panadería', estado: 'Activo' },
-  { codigo: '003', nombre: 'Chips de chocolate', categoria: 'Pastelería', estado: 'Activo' },
-  { codigo: '004', nombre: 'Tarta frutal', categoria: 'Pastelería', estado: 'Activo' },
-  { codigo: '005', nombre: 'Scones integrales', categoria: 'Panadería', estado: 'Inactivo' },
-  { codigo: '006', nombre: 'Budín de limón', categoria: 'Pastelería', estado: 'Activo' },
-  { codigo: '007', nombre: 'Focaccia mediterránea', categoria: 'Panadería', estado: 'Activo' },
-  { codigo: '008', nombre: 'Brownies', categoria: 'Pastelería', estado: 'Activo' },
+  { codigo: '001', nombre: 'Pan Frances', categoria: 'Panaderia', estado: 'Activo' },
+  { codigo: '002', nombre: 'Medialunas', categoria: 'Panaderia', estado: 'Activo' },
+  { codigo: '003', nombre: 'Chips de chocolate', categoria: 'Pasteleria', estado: 'Activo' },
+  { codigo: '004', nombre: 'Tarta frutal', categoria: 'Pasteleria', estado: 'Activo' },
+  { codigo: '005', nombre: 'Scones integrales', categoria: 'Panaderia', estado: 'Inactivo' },
+  { codigo: '006', nombre: 'Budin de limon', categoria: 'Pasteleria', estado: 'Activo' },
+  { codigo: '007', nombre: 'Focaccia mediterranea', categoria: 'Panaderia', estado: 'Activo' },
+  { codigo: '008', nombre: 'Brownies', categoria: 'Pasteleria', estado: 'Activo' },
 ];
 
 function ListadoProducto() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [estadoFiltros, setEstadoFiltros] = useState([]);
   const [categoriaFiltros, setCategoriaFiltros] = useState([]);
@@ -48,13 +51,18 @@ function ListadoProducto() {
     console.info('Eliminar producto:', producto);
   };
 
+  const initials = useMemo(() => getUserInitials(user), [user]);
+  const displayName = useMemo(() => getUserName(user) || 'Perfil', [user]);
+
   return (
     <div className="ltp-main">
       <header className="ltp-main-header">
         <div>
           <h1 className="ltp-page-title">Lista de productos</h1>
         </div>
-        <div className="ltp-user-badge">AP</div>
+        <div className="ltp-user-badge" title={displayName} aria-label={`Perfil de ${displayName}`}>
+          <span aria-hidden="true">{initials}</span>
+        </div>
       </header>
 
       <section className="ltp-card">
@@ -107,4 +115,3 @@ function ListadoProducto() {
 }
 
 export default ListadoProducto;
-

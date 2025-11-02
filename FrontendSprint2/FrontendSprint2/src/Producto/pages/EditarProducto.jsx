@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../../features/auth/AuthContext.jsx';
+import { getUserInitials, getUserName } from '../../features/auth/userUtils.js';
 import FormEditarProducto from '../components/FormEditarProducto.jsx';
 import { getTipoProductoById } from '../../services/tipoProductoService';
 import '../EditarProducto.css';
@@ -36,6 +38,7 @@ function mapApiProducto(data, fallbackId) {
 
 function EditarProducto() {
   const { codigo } = useParams();
+  const { user } = useAuth();
   const [rawProduct, setRawProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,7 +59,7 @@ function EditarProducto() {
           setError(
             fetchError instanceof Error
               ? fetchError.message
-              : 'Ocurrió un problema al cargar el producto.',
+              : 'Ocurrio un problema al cargar el producto.',
           );
         }
       } finally {
@@ -79,6 +82,9 @@ function EditarProducto() {
     return mapApiProducto(rawProduct, codigo);
   }, [rawProduct, codigo]);
 
+  const initials = useMemo(() => getUserInitials(user), [user]);
+  const displayName = useMemo(() => getUserName(user) || 'Perfil', [user]);
+
   if (loading) {
     return (
       <div className="etp-main">
@@ -86,7 +92,7 @@ function EditarProducto() {
           <h1 className="etp-title">Editar producto</h1>
         </header>
         <div className="etp-card">
-          <p>Cargando información del producto...</p>
+          <p>Cargando informacion del producto...</p>
         </div>
       </div>
     );
@@ -130,8 +136,8 @@ function EditarProducto() {
         <div>
           <h1 className="etp-title">Editar producto</h1>
         </div>
-        <div className="etp-user-badge" aria-hidden="true">
-          <span>AP</span>
+        <div className="etp-user-badge" title={displayName} aria-label={`Perfil de ${displayName}`}>
+          <span aria-hidden="true">{initials}</span>
         </div>
       </header>
 
