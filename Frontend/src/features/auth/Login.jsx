@@ -80,7 +80,7 @@ export default function Login() {
       }
       active.setItem('auth.remember', String(remember));
       setGlobalSuccess('Sesion iniciada.');
-      navigate('/dashboard');
+      navigate('/dashboard'); // placeholder segun HU-02
     } catch (error) {
       const payload = error?.data;
       const nextServerErrors = {};
