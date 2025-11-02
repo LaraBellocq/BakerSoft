@@ -105,7 +105,7 @@ class TipoProductoEstadoUpdateView(generics.UpdateAPIView):
 
 class TipoProductoListView(generics.ListAPIView):
     serializer_class = TipoProductoListSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     lookup_field = "id_tipoproducto"
     queryset = TipoProducto.objects.all()
 
