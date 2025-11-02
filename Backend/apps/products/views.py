@@ -103,6 +103,19 @@ class TipoProductoEstadoUpdateView(generics.UpdateAPIView):
         return Response({"message": message}, status=status.HTTP_200_OK)
 
 
+class TipoProductoDetailView(generics.RetrieveAPIView):
+    serializer_class = TipoProductoListSerializer
+    permission_classes = [permissions.AllowAny]
+    queryset = TipoProducto.objects.all()
+    lookup_field = "id_tipoproducto"
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Http404 as exc:
+            raise NotFound(detail={"error": "No se encontró el tipo de producto solicitado."}) from exc
+
+
 class TipoProductoListView(generics.ListAPIView):
     serializer_class = TipoProductoListSerializer
     permission_classes = [permissions.AllowAny]
