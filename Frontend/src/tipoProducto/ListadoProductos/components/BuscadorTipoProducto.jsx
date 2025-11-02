@@ -12,7 +12,7 @@ function BuscadorTipoProducto({ value, onChange, placeholder = 'Buscar por nombr
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        aria-label="Buscar producto"
+        aria-label="Buscar tipo de producto"
       />
       {children}
     </div>

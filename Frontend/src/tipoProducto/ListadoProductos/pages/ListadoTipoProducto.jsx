@@ -50,7 +50,7 @@ function ListadoTipoProducto() {
     <div className="ltp-main">
       <header className="ltp-main-header">
         <div>
-          <h1 className="ltp-page-title">Lista de productos</h1>
+          <h1 className="ltp-page-title">Lista de tipos de producto</h1>
         </div>
         <div className="ltp-user-badge">AP</div>
       </header>

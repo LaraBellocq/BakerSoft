@@ -7,10 +7,10 @@ function ModalConfirmacion({ open, mode, productName, onCancel, onConfirm }) {
   }
 
   const isActivating = mode === 'activate';
-  const title = isActivating ? 'Reactivar producto' : 'Desactivar producto';
+  const title = isActivating ? 'Reactivar tipo de producto' : 'Desactivar tipo de producto';
   const description = isActivating
-    ? `¿Estás seguro de que quieres activar el producto “${productName}”? Todos los productos asociados se activarán automáticamente.`
-    : `¿Estás seguro de que quieres desactivar el producto “${productName}”? Todos los productos asociados también se marcarán como inactivos.`;
+    ? `¿Estás seguro de que quieres activar el tipo de producto “${productName}”? Todos los productos asociados se activarán automáticamente.`
+    : `¿Estás seguro de que quieres desactivar el tipo de producto “${productName}”? Todos los productos asociados también se marcarán como inactivos.`;
 
   return (
     <div className="btp-modal-backdrop" role="presentation">

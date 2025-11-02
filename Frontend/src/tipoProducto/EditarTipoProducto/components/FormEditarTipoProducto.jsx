@@ -138,7 +138,7 @@ function FormEditarTipoProducto({ product }) {
       setTimeout(resolve, 600);
     });
 
-    setSuccessMessage('Producto actualizado correctamente.');
+    setSuccessMessage('Tipo de producto actualizado correctamente.');
     setErrorMessage('');
     setIsSubmitting(false);
   };
@@ -161,9 +161,9 @@ function FormEditarTipoProducto({ product }) {
     setIsModalOpen(false);
 
     if (pendingActive) {
-      setStatusMessage({ type: 'activated', text: 'El producto se activó correctamente.' });
+      setStatusMessage({ type: 'activated', text: 'El tipo de producto se activó correctamente.' });
     } else {
-      setStatusMessage({ type: 'deactivated', text: 'El producto se marcó como inactivo.' });
+      setStatusMessage({ type: 'deactivated', text: 'El tipo de producto se marcó como inactivo.' });
     }
 
     setPendingActive(null);
@@ -213,7 +213,7 @@ function FormEditarTipoProducto({ product }) {
             required
             maxLength={64}
             error={errors.name}
-            placeholder="Nombre del producto"
+            placeholder="Nombre del tipo de producto"
           />
 
           <InputField

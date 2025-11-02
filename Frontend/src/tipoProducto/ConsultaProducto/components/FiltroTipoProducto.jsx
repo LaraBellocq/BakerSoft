@@ -84,7 +84,7 @@ function FiltroTipoProducto({ selectedEstados, selectedCategorias, onChange }) {
         onClick={() => setOpen((prev) => !prev)}
         aria-haspopup="true"
         aria-expanded={open}
-        aria-label="Abrir filtros de productos"
+        aria-label="Abrir filtros de tipos de producto"
         ref={triggerRef}
       >
         🧮

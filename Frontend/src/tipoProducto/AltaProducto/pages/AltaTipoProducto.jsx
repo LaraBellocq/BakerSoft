@@ -6,7 +6,7 @@ function AltaTipoProducto() {
     <div className="tp-main">
       <header className="tp-main-header">
         <div>
-          <h1 className="tp-page-title">Nuevo producto</h1>
+          <h1 className="tp-page-title">Nuevo tipo de producto</h1>
         </div>
         <div className="tp-user-badge" title="Perfil">
           <span>AP</span>
