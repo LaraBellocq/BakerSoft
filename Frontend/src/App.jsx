@@ -1,14 +1,14 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import Login from './features/auth/Login.jsx';
-import { Dashboard } from './Dashboard';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
+import Dashboard from './Dashboard/pages/Dashboard.jsx';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
