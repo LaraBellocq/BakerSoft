@@ -1,11 +1,17 @@
 import logging
 
+from django.http import Http404
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from apps.common.request import get_client_ip
 
-from .serializers import TipoProductoCreateSerializer
+from .models import TipoProducto
+from .serializers import (
+    TipoProductoCreateSerializer,
+    TipoProductoUpdateSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,4 +47,28 @@ class TipoProductoCreateView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
             headers=headers,
+        )
+
+
+class TipoProductoUpdateView(generics.UpdateAPIView):
+    serializer_class = TipoProductoUpdateSerializer
+    permission_classes = [permissions.AllowAny]
+    queryset = TipoProducto.objects.all()
+    lookup_field = "id_tipoproducto"
+    http_method_names = ["put"]
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Http404 as exc:
+            raise NotFound(detail={"error": "No se encontro el tipo de producto solicitado."}) from exc
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=False)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {"message": "Tipo de producto actualizado correctamente."},
+            status=status.HTTP_200_OK,
         )

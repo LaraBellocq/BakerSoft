@@ -35,3 +35,46 @@ class TipoProductoCreateSerializer(serializers.ModelSerializer):
             estado=estado,
         )
         return tipo_producto
+
+
+class TipoProductoUpdateSerializer(serializers.ModelSerializer):
+    nombre = serializers.CharField(required=True, max_length=50, allow_blank=False)
+    descripcion = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    activo = serializers.BooleanField(required=False)
+
+    class Meta:
+        model = TipoProducto
+        fields = ("nombre", "descripcion", "activo")
+
+    def validate_nombre(self, value: str) -> str:
+        nombre = (value or "").strip()
+        if not nombre:
+            raise serializers.ValidationError("El nombre no puede estar vacio.")
+
+        queryset = TipoProducto.objects.filter(nombre__iexact=nombre)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError("Ya existe un tipo de producto con ese nombre.")
+
+        return nombre
+
+    def validate(self, attrs):
+        activo = attrs.get("activo")
+        if activo is not None:
+            attrs["estado"] = (
+                TipoProducto.ESTADO_ACTIVO if activo else TipoProducto.ESTADO_INACTIVO
+            )
+        return attrs
+
+    def update(self, instance: TipoProducto, validated_data):
+        instance.nombre = validated_data.get("nombre", instance.nombre)
+
+        if "descripcion" in validated_data:
+            instance.descripcion = validated_data.get("descripcion") or ""
+
+        if "estado" in validated_data:
+            instance.estado = validated_data["estado"]
+
+        instance.save()
+        return instance
