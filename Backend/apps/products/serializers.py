@@ -4,6 +4,14 @@ from rest_framework import serializers
 from .models import TipoProducto
 
 
+class TipoProductoListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="id_tipoproducto")
+
+    class Meta:
+        model = TipoProducto
+        fields = ("id", "nombre", "descripcion", "estado")
+
+
 class TipoProductoCreateSerializer(serializers.ModelSerializer):
     nombre = serializers.CharField(required=True, max_length=50, allow_blank=False)
     descripcion = serializers.CharField(required=False, allow_blank=True, max_length=255)

@@ -11,6 +11,7 @@ from .models import TipoProducto
 from .serializers import (
     TipoProductoCreateSerializer,
     TipoProductoEstadoUpdateSerializer,
+    TipoProductoListSerializer,
     TipoProductoUpdateSerializer,
 )
 
@@ -100,3 +101,42 @@ class TipoProductoEstadoUpdateView(generics.UpdateAPIView):
             else "Tipo de producto desactivado correctamente."
         )
         return Response({"message": message}, status=status.HTTP_200_OK)
+
+
+class TipoProductoListView(generics.ListAPIView):
+    serializer_class = TipoProductoListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id_tipoproducto"
+    queryset = TipoProducto.objects.all()
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method.lower() == "post":
+            return TipoProductoCreateView.as_view()(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        queryset = TipoProducto.objects.all()
+
+        estado = (self.request.query_params.get("estado") or "").strip()
+        if estado:
+            queryset = queryset.filter(estado__iexact=estado)
+
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            queryset = queryset.filter(nombre__icontains=search)
+
+        return queryset.order_by("nombre")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if not queryset.exists():
+            return Response({"message": "Sin resultados."}, status=status.HTTP_200_OK)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,15 +1,18 @@
 from django.urls import path
 
 from .views import (
-    TipoProductoCreateView,
     TipoProductoEstadoUpdateView,
+    TipoProductoListView,
     TipoProductoUpdateView,
 )
 
 app_name = "products"
 
+tipo_producto_root_view = TipoProductoListView.as_view()
+
 urlpatterns = [
-    path("tipo-producto/", TipoProductoCreateView.as_view(), name="tipo-producto-create"),
+    path("tipo-producto/", tipo_producto_root_view, name="tipo-producto-list"),
+    path("tipo-producto/", tipo_producto_root_view, name="tipo-producto-create"),
     path(
         "tipo-producto/<int:id_tipoproducto>/",
         TipoProductoUpdateView.as_view(),
