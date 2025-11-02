@@ -75,7 +75,7 @@ export const createTipoProducto = async (tipoProductoData) => {
   }
 };
 
-export const getTiposProducto = async ({ search } = {}) => {
+export const getTiposProducto = async ({ search, signal } = {}) => {
   try {
     const queryParams = new URLSearchParams();
     if (search) {
@@ -87,11 +87,14 @@ export const getTiposProducto = async ({ search } = {}) => {
       headers: {
         Accept: 'application/json',
       },
+      signal,
     });
 
     if (!response.ok) {
       const data = await ensureJson(response);
-      throw new Error(data.message || 'Error al obtener los tipos de producto');
+      const error = new Error(data.message || 'Error al obtener los tipos de producto');
+      error.status = response.status;
+      throw error;
     }
 
     const data = await response.json();

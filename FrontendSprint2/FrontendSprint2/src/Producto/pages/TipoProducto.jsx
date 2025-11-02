@@ -1,10 +1,11 @@
-﻿import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/TipoProducto.css';
 import { getTiposProducto, deleteTipoProducto } from '../../services/tipoProductoService';
 
 function TipoProducto() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [tiposProducto, setTiposProducto] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -12,15 +13,49 @@ function TipoProducto() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const abortControllerRef = useRef(null);
+  const retryTimeoutRef = useRef(null);
+  const hasAppliedRefreshRef = useRef(false);
+
+  useEffect(() => {
+    if (location.state?.refreshTipos && !hasAppliedRefreshRef.current) {
+      hasAppliedRefreshRef.current = true;
+      setReloadKey((prev) => prev + 1);
+      navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true });
+    } else if (!location.state?.refreshTipos) {
+      hasAppliedRefreshRef.current = false;
+    }
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
 
   useEffect(() => {
     let cancelled = false;
+    let debounceTimeoutId = null;
 
-    async function fetchTiposProducto() {
+    const clearRetryTimeout = () => {
+      if (retryTimeoutRef.current) {
+        window.clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+
+    const fetchTiposProducto = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      let keepLoading = false;
+
       try {
         setIsLoading(true);
-        setError(null);
-        const data = await getTiposProducto({ search: searchTerm });
+        const data = await getTiposProducto({ search: searchTerm, signal: controller.signal });
 
         if (cancelled) {
           return;
@@ -28,24 +63,53 @@ function TipoProducto() {
 
         const resultados = Array.isArray(data?.results) ? data.results : data ?? [];
         setTiposProducto(resultados);
+        clearRetryTimeout();
+        setError(null);
       } catch (err) {
-        if (!cancelled) {
+        if (cancelled) {
+          keepLoading = true;
+          return;
+        }
+
+        if (err?.name === 'AbortError') {
+          return;
+        }
+
+        if (err?.status === 429) {
+          keepLoading = true;
+          setError('Limite de consultas alcanzado. Reintentaremos en unos segundos...');
+          clearRetryTimeout();
+          retryTimeoutRef.current = window.setTimeout(() => {
+            if (!cancelled) {
+              setReloadKey((prev) => prev + 1);
+            }
+            retryTimeoutRef.current = null;
+          }, 2000);
+        } else {
           setError('Error al cargar los tipos de producto');
           console.error(err);
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && !keepLoading) {
           setIsLoading(false);
         }
       }
-    }
+    };
 
-    const timeoutId = window.setTimeout(fetchTiposProducto, 300);
+    debounceTimeoutId = window.setTimeout(fetchTiposProducto, 300);
+
     return () => {
       cancelled = true;
-      window.clearTimeout(timeoutId);
+      if (debounceTimeoutId) {
+        window.clearTimeout(debounceTimeoutId);
+      }
+      clearRetryTimeout();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
     };
-  }, [searchTerm]);
+  }, [searchTerm, reloadKey]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);

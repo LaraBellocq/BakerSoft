@@ -68,7 +68,7 @@ function EditarTipoProducto() {
       });
       setShowSuccess(true);
       window.setTimeout(() => {
-        navigate('/productos/tipos');
+        navigate('/productos/tipos', { state: { refreshTipos: true } });
       }, 2000);
     } catch (submitError) {
       setError(submitError?.message ?? 'Error al actualizar el tipo de producto.');
