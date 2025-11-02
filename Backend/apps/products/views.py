@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class TipoProductoCreateView(generics.CreateAPIView):
     serializer_class = TipoProductoCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
