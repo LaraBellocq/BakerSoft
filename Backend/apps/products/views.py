@@ -77,7 +77,7 @@ class TipoProductoUpdateView(generics.UpdateAPIView):
 
 class TipoProductoEstadoUpdateView(generics.UpdateAPIView):
     serializer_class = TipoProductoEstadoUpdateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     queryset = TipoProducto.objects.all()
     lookup_field = "id_tipoproducto"
     http_method_names = ["patch"]
