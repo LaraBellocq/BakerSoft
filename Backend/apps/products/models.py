@@ -1,18 +1,41 @@
 from django.db import models
 
-from apps.common.mixins import TimeStampedModel
 
+class TipoProducto(models.Model):
+    ESTADO_ACTIVO = "Activo"
+    ESTADO_INACTIVO = "Inactivo"
+    ESTADO_CHOICES = (
+        (ESTADO_ACTIVO, "Activo"),
+        (ESTADO_INACTIVO, "Inactivo"),
+    )
 
-class ProductType(TimeStampedModel):
-    codigo = models.CharField(max_length=20, unique=True)
-    nombre = models.CharField(max_length=100, unique=True)
-    descripcion = models.TextField(blank=True)
-    activo = models.BooleanField(default=True)
+    id_tipoproducto = models.AutoField(
+        primary_key=True,
+        db_column="id_TipoProducto",
+    )
+    nombre = models.CharField(
+        max_length=50,
+        unique=True,
+        db_column="nombre_TP",
+    )
+    descripcion = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        db_column="descripcion_TP",
+    )
+    estado = models.CharField(
+        max_length=8,
+        choices=ESTADO_CHOICES,
+        default=ESTADO_ACTIVO,
+        db_column="estado",
+    )
 
     class Meta:
+        db_table = "TipoProducto"
         ordering = ["nombre"]
         verbose_name = "Tipo de producto"
         verbose_name_plural = "Tipos de producto"
 
     def __str__(self) -> str:
-        return f"{self.nombre} ({self.codigo})"
+        return f"{self.nombre} ({self.estado})"

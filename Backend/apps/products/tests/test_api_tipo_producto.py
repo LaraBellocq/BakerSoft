@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
-from apps.products.models import ProductType
+from apps.products.models import TipoProducto
 
 
 pytestmark = pytest.mark.django_db
@@ -26,38 +26,39 @@ def _authenticated_client():
 def test_crear_tipo_producto_exitoso():
     client = _authenticated_client()
     payload = {
-        "codigo": "PAN01",
-        "nombre": "Pan Tradicional",
-        "descripcion": "Productos elaborados con masa madre.",
+        "nombre": "Pastelería",
+        "descripcion": "Productos dulces y tortas",
+        "activo": True,
     }
 
     resp = client.post(URL, payload, format="json")
 
     assert resp.status_code == 201
     assert resp.data["message"] == "Tipo de producto creado correctamente."
-    assert ProductType.objects.filter(codigo="PAN01").exists()
+    assert "id" in resp.data
+    tipo = TipoProducto.objects.get(nombre__iexact="Pastelería")
+    assert tipo.estado == TipoProducto.ESTADO_ACTIVO
 
 
-def test_codigo_o_nombre_duplicados_retorna_error():
+def test_nombre_duplicado_devuelve_error():
+    TipoProducto.objects.create(
+        nombre="Pastelería",
+        descripcion="Dulces",
+        estado=TipoProducto.ESTADO_ACTIVO,
+    )
     client = _authenticated_client()
-    ProductType.objects.create(
-        codigo="PAN01",
-        nombre="Pan Tradicional",
-        descripcion="Productos elaborados con masa madre.",
-    )
+    resp = client.post(URL, {"nombre": "pasteleria"}, format="json")
+    assert resp.status_code == 400
+    assert resp.data["error"] == "Ya existe un tipo de producto con ese nombre."
 
-    resp_codigo = client.post(
+
+def test_activo_false_guarda_inactivo():
+    client = _authenticated_client()
+    resp = client.post(
         URL,
-        {"codigo": "pan01", "nombre": "Nuevo nombre"},
+        {"nombre": "Sandwichería", "activo": False},
         format="json",
     )
-    assert resp_codigo.status_code == 400
-    assert resp_codigo.data["detail"][0] == "El código o nombre ya existen."
-
-    resp_nombre = client.post(
-        URL,
-        {"codigo": "PAN02", "nombre": "pan tradicional"},
-        format="json",
-    )
-    assert resp_nombre.status_code == 400
-    assert resp_nombre.data["detail"][0] == "El código o nombre ya existen."
+    assert resp.status_code == 201
+    tipo = TipoProducto.objects.get(nombre="Sandwichería")
+    assert tipo.estado == TipoProducto.ESTADO_INACTIVO

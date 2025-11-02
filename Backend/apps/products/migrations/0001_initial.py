@@ -9,25 +9,48 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="ProductType",
+            name="TipoProducto",
             fields=[
                 (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    "id_tipoproducto",
+                    models.AutoField(
+                        primary_key=True,
+                        serialize=False,
+                        db_column="id_TipoProducto",
                     ),
                 ),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("updated_at", models.DateTimeField(auto_now=True)),
-                ("codigo", models.CharField(max_length=20, unique=True)),
-                ("nombre", models.CharField(max_length=100, unique=True)),
-                ("descripcion", models.TextField(blank=True)),
-                ("activo", models.BooleanField(default=True)),
+                (
+                    "nombre",
+                    models.CharField(
+                        max_length=50,
+                        unique=True,
+                        db_column="nombre_TP",
+                    ),
+                ),
+                (
+                    "descripcion",
+                    models.CharField(
+                        max_length=255,
+                        blank=True,
+                        default="",
+                        db_column="descripcion_TP",
+                    ),
+                ),
+                (
+                    "estado",
+                    models.CharField(
+                        max_length=8,
+                        choices=[("Activo", "Activo"), ("Inactivo", "Inactivo")],
+                        default="Activo",
+                        db_column="estado",
+                    ),
+                ),
             ],
             options={
+                "db_table": "TipoProducto",
+                "ordering": ["nombre"],
                 "verbose_name": "Tipo de producto",
                 "verbose_name_plural": "Tipos de producto",
-                "ordering": ["nombre"],
             },
         ),
     ]
