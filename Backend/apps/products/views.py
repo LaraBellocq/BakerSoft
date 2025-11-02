@@ -10,6 +10,7 @@ from apps.common.request import get_client_ip
 from .models import TipoProducto
 from .serializers import (
     TipoProductoCreateSerializer,
+    TipoProductoEstadoUpdateSerializer,
     TipoProductoUpdateSerializer,
 )
 
@@ -61,7 +62,7 @@ class TipoProductoUpdateView(generics.UpdateAPIView):
         try:
             return super().get_object()
         except Http404 as exc:
-            raise NotFound(detail={"error": "No se encontro el tipo de producto solicitado."}) from exc
+            raise NotFound(detail={"error": "No se encontr\u00f3 el tipo de producto solicitado."}) from exc
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -72,3 +73,30 @@ class TipoProductoUpdateView(generics.UpdateAPIView):
             {"message": "Tipo de producto actualizado correctamente."},
             status=status.HTTP_200_OK,
         )
+
+
+class TipoProductoEstadoUpdateView(generics.UpdateAPIView):
+    serializer_class = TipoProductoEstadoUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = TipoProducto.objects.all()
+    lookup_field = "id_tipoproducto"
+    http_method_names = ["patch"]
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Http404 as exc:
+            raise NotFound(detail={"error": "No se encontr\u00f3 el tipo de producto solicitado."}) from exc
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        activo = serializer.validated_data["activo"]
+        message = (
+            "Tipo de producto reactivado correctamente."
+            if activo
+            else "Tipo de producto desactivado correctamente."
+        )
+        return Response({"message": message}, status=status.HTTP_200_OK)

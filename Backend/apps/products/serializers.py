@@ -1,3 +1,4 @@
+from django.apps import apps as django_apps
 from rest_framework import serializers
 
 from .models import TipoProducto
@@ -49,7 +50,7 @@ class TipoProductoUpdateSerializer(serializers.ModelSerializer):
     def validate_nombre(self, value: str) -> str:
         nombre = (value or "").strip()
         if not nombre:
-            raise serializers.ValidationError("El nombre no puede estar vacio.")
+            raise serializers.ValidationError("El nombre no puede estar vac\u00edo.")
 
         queryset = TipoProducto.objects.filter(nombre__iexact=nombre)
         if self.instance:
@@ -78,3 +79,28 @@ class TipoProductoUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class TipoProductoEstadoUpdateSerializer(serializers.Serializer):
+    activo = serializers.BooleanField()
+
+    def update(self, instance: TipoProducto, validated_data):
+        activo = validated_data["activo"]
+        nuevo_estado = TipoProducto.ESTADO_ACTIVO if activo else TipoProducto.ESTADO_INACTIVO
+
+        if instance.estado != nuevo_estado:
+            instance.estado = nuevo_estado
+
+        instance.save(update_fields=["estado"])
+
+        producto_model = self._get_producto_model()
+        if producto_model is not None:
+            producto_model.objects.filter(tipo_producto=instance).update(estado=nuevo_estado)
+
+        return instance
+
+    def _get_producto_model(self):
+        try:
+            return django_apps.get_model("products", "Producto")
+        except LookupError:
+            return None
